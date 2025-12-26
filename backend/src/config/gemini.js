@@ -8,10 +8,10 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 /**
  * Get Gemini model instance
- * @param {string} modelName - Model name (default: gemini-2.5-flash)
+ * @param {string} modelName - Model name (default: gemini-2.0-flash)
  * @returns {object} - Gemini model instance
  */
-export const getGeminiModel = (modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash') => {
+export const getGeminiModel = (modelName = process.env.GEMINI_MODEL || 'gemini-2.0-flash') => {
   return genAI.getGenerativeModel({ model: modelName });
 };
 

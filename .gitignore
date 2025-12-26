@@ -60,3 +60,7 @@ build/
 
 # Kidney Classifier - Ignore entire directory (models too large for GitHub)
 kidney-classifier/
+
+# Python ML files
+app.py
+requirements.txt

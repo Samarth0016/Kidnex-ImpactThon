@@ -16,7 +16,7 @@ const Layout = () => {
   const navigation = [
     { name: 'Dashboard', href: '/app/dashboard', icon: HomeIcon },
     { name: 'Detection', href: '/app/detection', icon: BeakerIcon },
-    { name: 'History', href: '/app/detection/history', icon: ClockIcon },
+    { name: 'History', href: '/app/history', icon: ClockIcon },
     { name: 'Health Logs', href: '/app/health-logs', icon: HeartIcon },
     { name: 'Medications', href: '/app/medications', icon: ClipboardDocumentListIcon },
     { name: 'Profile', href: '/app/profile', icon: UserIcon },

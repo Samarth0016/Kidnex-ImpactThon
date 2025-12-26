@@ -9,6 +9,7 @@ import OnboardingFlow from './pages/OnboardingFlow';
 import Dashboard from './pages/Dashboard';
 import DetectionPage from './pages/DetectionPage';
 import DetectionHistory from './pages/DetectionHistory';
+import DetectionDetail from './pages/DetectionDetail';
 import Profile from './pages/Profile';
 import HealthLogs from './pages/HealthLogs';
 import Medications from './pages/Medications';
@@ -56,6 +57,7 @@ function App() {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="detection" element={<DetectionPage />} />
           <Route path="history" element={<DetectionHistory />} />
+          <Route path="history/:id" element={<DetectionDetail />} />
           <Route path="profile" element={<Profile />} />
           <Route path="health-logs" element={<HealthLogs />} />
           <Route path="medications" element={<Medications />} />

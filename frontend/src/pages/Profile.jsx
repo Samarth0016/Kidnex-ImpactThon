@@ -31,17 +31,27 @@ const Profile = () => {
         profileAPI.getMedicalHistory(),
       ]);
 
-      setProfile(profileRes.data);
-      setMedicalHistory(historyRes.data);
+      // API returns { success: true, data: { profile: {...} } }
+      const profileData = profileRes.data.data?.profile || profileRes.data.data || profileRes.data;
+      const historyData = historyRes.data.data?.medicalHistory || historyRes.data.data || historyRes.data;
+
+      setProfile(profileData);
+      setMedicalHistory(historyData);
+
+      // Map schema fields to form fields
+      const fullName = profileData?.firstName && profileData?.lastName 
+        ? `${profileData.firstName} ${profileData.lastName}` 
+        : '';
 
       setFormData({
-        fullName: profileRes.data.fullName || '',
-        phoneNumber: profileRes.data.phoneNumber || '',
-        address: profileRes.data.address || '',
-        emergencyContact: profileRes.data.emergencyContact || '',
-        emergencyPhone: profileRes.data.emergencyPhone || '',
+        fullName: fullName,
+        phoneNumber: profileData?.phone || '',
+        address: profileData?.address || '',
+        emergencyContact: profileData?.emergencyContactName || '',
+        emergencyPhone: profileData?.emergencyContactPhone || '',
       });
     } catch (error) {
+      console.error('Failed to load profile:', error);
       toast.error('Failed to load profile');
     } finally {
       setLoading(false);
@@ -138,7 +148,7 @@ const Profile = () => {
                     className="w-32 h-32 rounded-full object-cover"
                   />
                 ) : (
-                  profile?.fullName?.charAt(0) || 'U'
+                  profile?.firstName?.charAt(0)?.toUpperCase() || 'U'
                 )}
               </div>
               <label className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-700 transition">
@@ -152,7 +162,11 @@ const Profile = () => {
               </label>
             </div>
 
-            <h2 className="text-xl font-bold text-gray-900">{profile?.fullName}</h2>
+            <h2 className="text-xl font-bold text-gray-900">
+              {profile?.firstName && profile?.lastName 
+                ? `${profile.firstName} ${profile.lastName}` 
+                : profile?.firstName || 'User'}
+            </h2>
             <p className="text-gray-600 text-sm mt-1">{user?.email}</p>
 
             {/* Quick Stats */}
@@ -161,15 +175,15 @@ const Profile = () => {
                 <div className="bg-blue-50 rounded-lg p-3">
                   <p className="text-sm text-gray-600">Age</p>
                   <p className="text-lg font-semibold text-gray-900">
-                    {calculateAge(profile.dateOfBirth)} years
+                    {profile.age || calculateAge(profile.dateOfBirth)} years
                   </p>
                 </div>
               )}
-              {medicalHistory?.height && medicalHistory?.weight && (
+              {profile?.height && profile?.weight && (
                 <div className="bg-green-50 rounded-lg p-3">
                   <p className="text-sm text-gray-600">BMI</p>
                   <p className="text-lg font-semibold text-gray-900">
-                    {calculateBMI(medicalHistory.height, medicalHistory.weight)}
+                    {profile.bmi?.toFixed(1) || calculateBMI(profile.height, profile.weight)}
                   </p>
                 </div>
               )}
@@ -271,7 +285,7 @@ const Profile = () => {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Phone</p>
-                  <p className="font-semibold text-gray-900">{profile?.phoneNumber || 'Not set'}</p>
+                  <p className="font-semibold text-gray-900">{profile?.phone || 'Not set'}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Address</p>
@@ -280,13 +294,25 @@ const Profile = () => {
                 <div>
                   <p className="text-sm text-gray-600">Emergency Contact</p>
                   <p className="font-semibold text-gray-900">
-                    {profile?.emergencyContact || 'Not set'}
+                    {profile?.emergencyContactName || 'Not set'}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Emergency Phone</p>
                   <p className="font-semibold text-gray-900">
-                    {profile?.emergencyPhone || 'Not set'}
+                    {profile?.emergencyContactPhone || 'Not set'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Height</p>
+                  <p className="font-semibold text-gray-900">
+                    {profile?.height ? `${profile.height} cm` : 'Not set'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Weight</p>
+                  <p className="font-semibold text-gray-900">
+                    {profile?.weight ? `${profile.weight} kg` : 'Not set'}
                   </p>
                 </div>
               </div>

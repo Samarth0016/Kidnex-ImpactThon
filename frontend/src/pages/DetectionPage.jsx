@@ -10,6 +10,7 @@ import {
   ComputerDesktopIcon 
 } from '@heroicons/react/24/outline';
 import LoadingSpinner from '../components/LoadingSpinner';
+import ReactMarkdown from 'react-markdown';
 
 const DetectionPage = () => {
   const navigate = useNavigate();
@@ -55,7 +56,7 @@ const DetectionPage = () => {
       const aiMessage = {
         id: `ai-${Date.now()}`,
         type: 'ai',
-        content: response.data.data.response,
+        content: response.data.data.aiMessage.message,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, aiMessage]);
@@ -278,9 +279,9 @@ const DetectionPage = () => {
                         <SparklesIcon className="w-5 h-5 text-purple-600" />
                         AI Recommendations
                       </h4>
-                      <p className="text-sm text-gray-700 whitespace-pre-line">
-                        {message.detection.aiSuggestions}
-                      </p>
+                      <div className="prose prose-sm max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700">
+                        <ReactMarkdown>{message.detection.aiSuggestions}</ReactMarkdown>
+                      </div>
                     </div>
                   )}
                 </div>

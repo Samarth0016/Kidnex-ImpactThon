@@ -115,12 +115,12 @@ export const dashboardAPI = {
 
 // Health Logs API
 export const healthLogAPI = {
-  createLog: (data) => api.post('/health-log', data),
-  create: (data) => api.post('/health-log', data),
-  getLogs: (params) => api.get('/health-log', { params }),
-  getAll: (params) => api.get('/health-log', { params }),
-  getLatest: () => api.get('/health-log/latest'),
-  deleteLog: (id) => api.delete(`/health-log/${id}`),
+  createLog: (data) => api.post('/health-logs', data),
+  create: (data) => api.post('/health-logs', data),
+  getLogs: (params) => api.get('/health-logs', { params }),
+  getAll: (params) => api.get('/health-logs', { params }),
+  getLatest: () => api.get('/health-logs/latest'),
+  deleteLog: (id) => api.delete(`/health-logs/${id}`),
 };
 
 // Medications API

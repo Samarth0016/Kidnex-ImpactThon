@@ -27,7 +27,8 @@ const HealthLogs = () => {
   const loadLogs = async () => {
     try {
       const response = await healthLogAPI.getLogs();
-      setLogs(response.data);
+      // API returns { success: true, data: { logs: [...] } }
+      setLogs(response.data.data?.logs || []);
     } catch (error) {
       toast.error('Failed to load health logs');
     } finally {

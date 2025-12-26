@@ -28,8 +28,9 @@ const Medications = () => {
 
   const loadMedications = async () => {
     try {
-      const response = await medicationAPI.getMedications();
-      setMedications(response.data);
+      const response = await medicationAPI.getAll();
+      // API returns { success: true, data: { medications: [...] } }
+      setMedications(response.data.data?.medications || []);
     } catch (error) {
       toast.error('Failed to load medications');
     } finally {
@@ -50,10 +51,10 @@ const Medications = () => {
 
     try {
       if (editingId) {
-        await medicationAPI.updateMedication(editingId, formData);
+        await medicationAPI.update(editingId, formData);
         toast.success('Medication updated');
       } else {
-        await medicationAPI.createMedication(formData);
+        await medicationAPI.create(formData);
         toast.success('Medication added');
       }
       resetForm();
@@ -85,7 +86,7 @@ const Medications = () => {
     if (!window.confirm('Are you sure you want to delete this medication?')) return;
 
     try {
-      await medicationAPI.deleteMedication(id);
+      await medicationAPI.delete(id);
       toast.success('Medication deleted');
       await loadMedications();
     } catch (error) {

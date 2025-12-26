@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { chatAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import {
   ChatBubbleLeftRightIcon,
@@ -7,14 +9,20 @@ import {
   XMarkIcon,
   SparklesIcon,
 } from '@heroicons/react/24/outline';
+import ReactMarkdown from 'react-markdown';
 
 const Chatbot = () => {
+  const { isAuthenticated, hasProfile } = useAuth();
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const messagesEndRef = useRef(null);
+
+  // Only show chatbot on protected /app routes when authenticated
+  const shouldShowChatbot = isAuthenticated && hasProfile && location.pathname.startsWith('/app');
 
   useEffect(() => {
     if (isOpen && messages.length === 0) {
@@ -34,10 +42,17 @@ const Chatbot = () => {
     setLoadingHistory(true);
     try {
       const response = await chatAPI.getHistory();
-      setMessages(response.data);
+      // API returns { success: true, data: { messages: [...], pagination: {...} } }
+      const chatMessages = response.data.data?.messages || response.data.messages || [];
+      
+      // Map 'message' field to 'content' for compatibility
+      const formattedMessages = chatMessages.map(msg => ({
+        ...msg,
+        content: msg.message || msg.content,
+      }));
       
       // Add welcome message if no history
-      if (response.data.length === 0) {
+      if (formattedMessages.length === 0) {
         setMessages([
           {
             id: 'welcome',
@@ -47,9 +62,20 @@ const Chatbot = () => {
             createdAt: new Date().toISOString(),
           },
         ]);
+      } else {
+        setMessages(formattedMessages);
       }
     } catch (error) {
       console.error('Failed to load chat history:', error);
+      // Set welcome message on error
+      setMessages([
+        {
+          id: 'welcome',
+          role: 'assistant',
+          content: "👋 Hello! I'm your AI health assistant. How can I help you today?",
+          createdAt: new Date().toISOString(),
+        },
+      ]);
     } finally {
       setLoadingHistory(false);
     }
@@ -72,14 +98,17 @@ const Chatbot = () => {
 
     try {
       const response = await chatAPI.sendMessage(inputMessage);
+      // API returns { success: true, data: { userMessage, aiMessage: { id, message, createdAt } } }
+      const aiData = response.data.data?.aiMessage || response.data.aiMessage || {};
       const aiMessage = {
-        id: response.data.id,
+        id: aiData.id || Date.now().toString(),
         role: 'assistant',
-        content: response.data.response,
-        createdAt: response.data.createdAt,
+        content: aiData.message || 'Sorry, I could not process your request.',
+        createdAt: aiData.createdAt || new Date().toISOString(),
       };
       setMessages((prev) => [...prev, aiMessage]);
     } catch (error) {
+      console.error('Chat error:', error);
       toast.error('Failed to send message');
       // Remove the user message if sending failed
       setMessages((prev) => prev.filter((msg) => msg.id !== userMessage.id));
@@ -114,15 +143,24 @@ const Chatbot = () => {
     'When should I see a doctor?',
     'How can I improve my health score?',
   ];
+  // Don't render if not on app routes or not authenticated
+  if (!shouldShowChatbot) {
+    return null;
+  }
 
   return (
     <>
       {/* Floating Chat Button */}
       {!isOpen && (
         <button
-          onClick={() => setIsOpen(true)}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            setIsOpen(true);
+          }}
           className="fixed bottom-6 right-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 z-50"
           aria-label="Open chat"
+          type="button"
         >
           <ChatBubbleLeftRightIcon className="w-6 h-6" />
         </button>
@@ -130,7 +168,10 @@ const Chatbot = () => {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 w-96 h-[600px] bg-white rounded-2xl shadow-2xl flex flex-col z-50 border border-gray-200">
+        <div 
+          className="fixed bottom-6 right-6 w-96 h-[600px] bg-white rounded-2xl shadow-2xl flex flex-col z-50 border border-gray-200"
+          onClick={(e) => e.stopPropagation()}
+        >
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-t-2xl flex justify-between items-center">
             <div className="flex items-center gap-3">
@@ -170,7 +211,13 @@ const Chatbot = () => {
                           : 'bg-gray-100 text-gray-900'
                       }`}
                     >
-                      <p className="text-sm whitespace-pre-line">{message.content}</p>
+                      {message.role === 'user' ? (
+                        <p className="text-sm whitespace-pre-line">{message.content}</p>
+                      ) : (
+                        <div className="text-sm prose prose-sm max-w-none prose-p:my-1 prose-headings:my-2 prose-li:my-0">
+                          <ReactMarkdown>{message.content}</ReactMarkdown>
+                        </div>
+                      )}
                       <p
                         className={`text-xs mt-1 ${
                           message.role === 'user' ? 'text-blue-200' : 'text-gray-500'

@@ -3,7 +3,25 @@ import prisma from '../config/database.js';
 export const addMedication = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const data = req.body;
+    const body = req.body;
+
+    // Only include fields that exist in the Medication schema
+    const data = {};
+    const allowedFields = ['name', 'dosage', 'frequency', 'startDate', 'endDate', 'isActive', 'reminderTimes', 'notes', 'sideEffects'];
+    
+    allowedFields.forEach(field => {
+      if (body[field] !== undefined && body[field] !== '') {
+        data[field] = body[field];
+      }
+    });
+
+    // Convert date strings to proper DateTime format
+    if (data.startDate) {
+      data.startDate = new Date(data.startDate).toISOString();
+    }
+    if (data.endDate) {
+      data.endDate = new Date(data.endDate).toISOString();
+    }
 
     const medication = await prisma.medication.create({
       data: {
