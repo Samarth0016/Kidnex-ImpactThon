@@ -1,0 +1,395 @@
+// Prisma Schema for Health Monitoring Platform
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== USER & AUTHENTICATION ====================
+model User {
+  id                String    @id @default(uuid())
+  email             String    @unique
+  password          String // Hashed
+  emailVerified     Boolean   @default(false)
+  verificationToken String?
+  resetToken        String?
+  resetTokenExpiry  DateTime?
+
+  // Timestamps
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  lastLogin DateTime?
+
+  // Relations
+  profile          Profile?
+  medicalHistory   MedicalHistory?
+  detectionHistory DetectionHistory[]
+  chatHistory      ChatMessage[]
+  healthLogs       HealthLog[]
+  medications      Medication[]
+  familyMembers    FamilyMember[]
+  habits           HabitLog[]
+
+  @@map("users")
+}
+
+// ==================== USER PROFILE ====================
+model Profile {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Basic Information
+  firstName   String
+  lastName    String
+  gender      Gender
+  dateOfBirth DateTime
+  age         Int // Auto-calculated
+
+  // Physical Metrics
+  height Float // in cm
+  weight Float // in kg
+  bmi    Float // Auto-calculated
+
+  // Contact & Location
+  phone   String?
+  address String?
+  city    String?
+  state   String?
+  country String  @default("India")
+  pincode String?
+
+  // Emergency Contact
+  emergencyContactName  String?
+  emergencyContactPhone String?
+
+  // Health Goal
+  healthGoal HealthGoal?
+
+  // Profile Picture
+  profilePicture String? // Cloudinary URL
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("profiles")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum HealthGoal {
+  EARLY_DETECTION
+  WEIGHT_LOSS
+  DIABETES_PREVENTION
+  HEART_HEALTH
+  GENERAL_WELLNESS
+}
+
+// ==================== MEDICAL HISTORY ====================
+model MedicalHistory {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Pre-existing Conditions
+  diabetes       Boolean @default(false)
+  hypertension   Boolean @default(false)
+  heartCondition Boolean @default(false)
+  thyroid        Boolean @default(false)
+  asthma         Boolean @default(false)
+  pcos           Boolean @default(false)
+  allergies      String? // Text field for allergy details
+  other          String? // Other conditions
+
+  // Family History
+  familyDiabetes      Boolean @default(false)
+  familyHeartDisease  Boolean @default(false)
+  familyThyroid       Boolean @default(false)
+  familyCancer        Boolean @default(false)
+  familyKidneyDisease Boolean @default(false)
+  familyOther         String?
+
+  // Lifestyle
+  sleepHours    SleepDuration @default(SEVEN_TO_EIGHT)
+  activityLevel ActivityLevel @default(SEDENTARY)
+  smoking       Boolean       @default(false)
+  alcohol       Boolean       @default(false)
+
+  // Current Symptoms (Optional)
+  symptoms String[] // Array of symptom strings
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("medical_histories")
+}
+
+enum SleepDuration {
+  LESS_THAN_FIVE
+  FIVE_TO_SEVEN
+  SEVEN_TO_EIGHT
+  MORE_THAN_EIGHT
+}
+
+enum ActivityLevel {
+  SEDENTARY
+  LIGHT
+  MODERATE
+  HIGH
+}
+
+// ==================== DISEASE DETECTION ====================
+model DetectionHistory {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Detection Type
+  detectionType DetectionType
+
+  // Image Information
+  imageUrl         String // Cloudinary URL
+  imagePublicId    String // For deletion from Cloudinary
+  originalFilename String
+  imageSize        Int // in bytes
+
+  // Model Prediction
+  prediction    String // e.g., "Normal", "Cyst", "Stone", "Tumor"
+  confidence    Float // 0.0 to 1.0
+  probabilities Json // All class probabilities {"Normal": 0.85, "Tumor": 0.15, ...}
+  modelVersion  String @default("Random_Search_fold4")
+
+  // AI-Generated Suggestions
+  aiSuggestions String? @db.Text // Gemini API generated recommendations
+
+  // Risk Assessment
+  riskLevel RiskLevel?
+  riskScore Float? // 0-100
+
+  // Notes
+  userNotes   String? @db.Text
+  doctorNotes String? @db.Text
+
+  // Status
+  status     DetectionStatus @default(PENDING_REVIEW)
+  reviewed   Boolean         @default(false)
+  reviewedAt DateTime?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([detectionType])
+  @@map("detection_histories")
+}
+
+enum DetectionType {
+  KIDNEY_DISEASE
+  BRAIN_TUMOR
+  LUNG_CANCER
+  SKIN_CANCER
+}
+
+enum RiskLevel {
+  LOW
+  MODERATE
+  HIGH
+  CRITICAL
+}
+
+enum DetectionStatus {
+  PENDING_REVIEW
+  REVIEWED
+  FOLLOW_UP_REQUIRED
+  CLEARED
+}
+
+// ==================== CHATBOT ====================
+model ChatMessage {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Message Content
+  role    ChatRole
+  message String   @db.Text
+
+  // Context (Optional - for special queries)
+  context Json? // User profile snapshot, recent detections, etc.
+
+  // AI Metadata
+  model  String @default("gemini-pro")
+  tokens Int?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@map("chat_messages")
+}
+
+enum ChatRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+// ==================== HEALTH LOGS ====================
+model HealthLog {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Vital Signs
+  bloodPressureSystolic  Int?
+  bloodPressureDiastolic Int?
+  heartRate              Int?
+  bloodSugar             Float?
+  weight                 Float?
+  temperature            Float?
+  oxygenSaturation       Int?
+
+  // Calculated Metrics
+  bmi Float?
+
+  // Notes
+  notes String?
+
+  // Timestamps
+  logDate   DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@index([userId, logDate])
+  @@map("health_logs")
+}
+
+// ==================== MEDICATIONS ====================
+model Medication {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Medication Details
+  name      String
+  dosage    String
+  frequency String // e.g., "Twice daily", "Every 8 hours"
+  startDate DateTime
+  endDate   DateTime?
+  isActive  Boolean   @default(true)
+
+  // Reminders
+  reminderTimes String[] // Array of times like ["09:00", "21:00"]
+
+  // Notes
+  notes       String?
+  sideEffects String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, isActive])
+  @@map("medications")
+}
+
+// ==================== FAMILY HEALTH ====================
+model FamilyMember {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Basic Info
+  name        String
+  relation    String // e.g., "Father", "Mother", "Sibling"
+  gender      Gender?
+  dateOfBirth DateTime?
+  age         Int?
+
+  // Medical History
+  conditions String[] // Array of conditions
+
+  // Shared Risk Factors
+  sharedRisks String[]
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("family_members")
+}
+
+// ==================== HABIT TRACKING ====================
+model HabitLog {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Habits for the day
+  date             DateTime @default(now())
+  waterIntake      Float? // in liters
+  steps            Int?
+  sleepHours       Float?
+  caloriesConsumed Int?
+  exerciseMinutes  Int?
+
+  // Mood & Mental Health
+  moodRating  Int? // 1-10
+  stressLevel Int? // 1-10
+
+  // Notes
+  notes String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  @@unique([userId, date]) // One log per day per user
+  @@index([userId, date])
+  @@map("habit_logs")
+}
+
+// ==================== MEDICAL REPORTS ====================
+model MedicalReport {
+  id     String @id @default(uuid())
+  userId String
+
+  // Report Details
+  reportType       ReportType
+  reportUrl        String // Cloudinary URL
+  reportPublicId   String
+  originalFilename String
+  fileSize         Int
+
+  // AI Analysis (Optional)
+  aiSummary    String? @db.Text
+  analyzedData Json? // Parsed values from report
+
+  // Metadata
+  reportDate DateTime?
+  uploadDate DateTime  @default(now())
+
+  // Notes
+  notes String?
+
+  @@map("medical_reports")
+}
+
+enum ReportType {
+  BLOOD_TEST
+  ECG
+  X_RAY
+  CT_SCAN
+  MRI
+  ULTRASOUND
+  OTHER
+}
