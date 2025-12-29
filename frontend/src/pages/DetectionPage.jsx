@@ -19,19 +19,17 @@ import ReactMarkdown from 'react-markdown';
 
 const DetectionPage = () => {
   const navigate = useNavigate();
-  const [messages, setMessages] = useState([
-    {
-      id: 'welcome',
-      type: 'ai',
-      content: 'Hello! I\'m your AI health assistant. You can ask me health questions or upload a CT scan image for disease detection.',
-      timestamp: new Date(),
-    }
-  ]);
+  const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(true);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    loadChatHistory();
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
@@ -39,6 +37,93 @@ const DetectionPage = () => {
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const loadChatHistory = async () => {
+    setLoadingHistory(true);
+    try {
+      // Load both chat messages and detection history in parallel
+      const [chatResponse, detectionResponse] = await Promise.all([
+        chatAPI.getHistory().catch(() => ({ data: { data: { messages: [] } } })),
+        detectionAPI.getHistory().catch(() => ({ data: { data: { detections: [] } } })),
+      ]);
+      
+      const chatMessages = chatResponse.data.data?.messages || chatResponse.data.messages || [];
+      const detections = detectionResponse.data.data?.detections || detectionResponse.data.detections || [];
+      
+      // Convert chat history to detection page format
+      const formattedChatMessages = chatMessages.map(msg => ({
+        id: msg.id,
+        type: msg.role === 'user' ? 'user' : 'ai',
+        content: msg.message || msg.content,
+        timestamp: new Date(msg.createdAt),
+      }));
+      
+      // Convert detection history to detection page format
+      const formattedDetections = detections.flatMap(detection => {
+        const messages = [];
+        
+        // Add user message with image preview
+        messages.push({
+          id: `user-detection-${detection.id}`,
+          type: 'user',
+          content: 'Uploaded CT scan image for analysis',
+          image: detection.imageUrl,
+          timestamp: new Date(detection.createdAt),
+        });
+        
+        // Add detection result message
+        messages.push({
+          id: `detection-result-${detection.id}`,
+          type: 'detection',
+          detection: {
+            id: detection.id,
+            prediction: detection.prediction,
+            confidence: detection.confidence,
+            probabilities: detection.probabilities,
+            riskLevel: detection.riskLevel,
+            riskScore: detection.riskScore,
+            aiSuggestions: detection.aiSuggestions,
+            imageUrl: detection.imageUrl,
+          },
+          timestamp: new Date(detection.createdAt),
+        });
+        
+        return messages;
+      });
+      
+      // Merge and sort all messages by timestamp
+      const allMessages = [...formattedChatMessages, ...formattedDetections].sort(
+        (a, b) => a.timestamp - b.timestamp
+      );
+      
+      // Add welcome message if no history
+      if (allMessages.length === 0) {
+        setMessages([
+          {
+            id: 'welcome',
+            type: 'ai',
+            content: 'Hello! I\'m your AI health assistant. You can ask me health questions or upload a CT scan image for disease detection.',
+            timestamp: new Date(),
+          }
+        ]);
+      } else {
+        setMessages(allMessages);
+      }
+    } catch (error) {
+      console.error('Failed to load chat history:', error);
+      // Set welcome message on error
+      setMessages([
+        {
+          id: 'welcome',
+          type: 'ai',
+          content: 'Hello! I\'m your AI health assistant. You can ask me health questions or upload a CT scan image for disease detection.',
+          timestamp: new Date(),
+        }
+      ]);
+    } finally {
+      setLoadingHistory(false);
+    }
   };
 
   const handleSendMessage = async (e) => {
@@ -241,7 +326,16 @@ const DetectionPage = () => {
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 bg-gradient-to-b from-gray-50 to-white">
-        {messages.map((message) => (
+        {loadingHistory ? (
+          <div className="flex justify-center items-center h-full">
+            <div className="flex flex-col items-center gap-4">
+              <LoadingSpinner size="lg" />
+              <p className="text-gray-600 font-medium">Loading chat history...</p>
+            </div>
+          </div>
+        ) : (
+          <>
+            {messages.map((message) => (
           <div
             key={message.id}
             className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'} animate-fadeIn`}
@@ -373,17 +467,47 @@ const DetectionPage = () => {
 
                   {/* AI Suggestions */}
                   {message.detection.aiSuggestions && (
-                    <div className="relative overflow-hidden bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50 rounded-xl p-5 border-2 border-purple-200 shadow-lg">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-200 to-transparent rounded-full -mr-16 -mt-16 opacity-30"></div>
+                    <div className="relative overflow-hidden bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50 rounded-xl p-6 border-2 border-purple-200 shadow-lg">
+                      <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-purple-200 to-transparent rounded-full -mr-24 -mt-24 opacity-30"></div>
+                      <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-blue-200 to-transparent rounded-full -ml-16 -mb-16 opacity-20"></div>
+                      
                       <div className="relative z-10">
-                        <div className="flex items-center gap-2 mb-3">
+                        <div className="flex items-center gap-2 mb-4">
                           <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg shadow-md">
-                            <SparklesIcon className="w-5 h-5 text-white" />
+                            <SparklesIconSolid className="w-5 h-5 text-white animate-pulse" />
                           </div>
-                          <h4 className="text-sm font-bold text-gray-900">AI-Powered Recommendations</h4>
+                          <h4 className="text-base font-bold text-gray-900">AI Health Recommendations</h4>
                         </div>
-                        <div className="prose prose-sm max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700 prose-strong:text-gray-900">
-                          <ReactMarkdown>{message.detection.aiSuggestions}</ReactMarkdown>
+                        
+                        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-5 shadow-md border border-purple-200">
+                          <div className="prose prose-sm max-w-none 
+                            prose-headings:text-gray-900 prose-headings:font-bold prose-headings:mb-3 prose-headings:mt-4 first:prose-headings:mt-0
+                            prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-3
+                            prose-li:text-gray-700 prose-li:mb-2 prose-li:leading-relaxed
+                            prose-strong:text-gray-900 prose-strong:font-bold
+                            prose-ul:space-y-2 prose-ul:my-3
+                            prose-ol:space-y-2 prose-ol:my-3
+                            marker:text-purple-600">
+                            <ReactMarkdown
+                              components={{
+                                h1: ({node, ...props}) => <h1 className="text-lg flex items-center gap-2" {...props} />,
+                                h2: ({node, ...props}) => <h2 className="text-base flex items-center gap-2" {...props} />,
+                                h3: ({node, ...props}) => <h3 className="text-sm flex items-center gap-2" {...props} />,
+                                ul: ({node, ...props}) => <ul className="space-y-2 my-3" {...props} />,
+                                ol: ({node, ...props}) => <ol className="space-y-2 my-3" {...props} />,
+                                li: ({node, ...props}) => (
+                                  <li className="flex items-start gap-2 bg-gradient-to-r from-purple-50 to-transparent p-2 rounded-lg hover:from-purple-100 transition-colors duration-200" {...props}>
+                                    <span className="flex-shrink-0 w-1.5 h-1.5 bg-purple-500 rounded-full mt-1.5"></span>
+                                    <span className="flex-1">{props.children}</span>
+                                  </li>
+                                ),
+                                p: ({node, ...props}) => <p className="leading-relaxed mb-3" {...props} />,
+                                strong: ({node, ...props}) => <strong className="font-bold text-purple-900" {...props} />,
+                              }}
+                            >
+                              {message.detection.aiSuggestions}
+                            </ReactMarkdown>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -430,6 +554,8 @@ const DetectionPage = () => {
         )}
 
         <div ref={messagesEndRef} />
+        </>
+        )}
       </div>
 
       {/* Input Area */}
