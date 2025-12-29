@@ -2,7 +2,23 @@ import { useState, useEffect } from 'react';
 import { healthLogAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { PlusIcon, HeartIcon, ScaleIcon, BoltIcon } from '@heroicons/react/24/outline';
+import { 
+  PlusIcon, 
+  HeartIcon, 
+  ScaleIcon, 
+  BoltIcon,
+  CalendarIcon,
+  ClockIcon,
+  XMarkIcon,
+  SparklesIcon,
+  TrashIcon,
+  FireIcon,
+  BeakerIcon,
+} from '@heroicons/react/24/outline';
+import { 
+  HeartIcon as HeartIconSolid,
+  FireIcon as FireIconSolid,
+} from '@heroicons/react/24/solid';
 
 const HealthLogs = () => {
   const [logs, setLogs] = useState([]);
@@ -96,20 +112,65 @@ const HealthLogs = () => {
   const getStatusColor = (metric, value) => {
     if (metric === 'bloodPressure') {
       const [systolic, diastolic] = value.split('/').map(Number);
-      if (systolic >= 140 || diastolic >= 90) return 'text-red-600';
-      if (systolic >= 120 || diastolic >= 80) return 'text-yellow-600';
-      return 'text-green-600';
+      if (systolic >= 140 || diastolic >= 90) return {
+        text: 'text-red-700',
+        bg: 'bg-red-100',
+        badge: 'bg-red-500',
+        ring: 'ring-red-300',
+      };
+      if (systolic >= 120 || diastolic >= 80) return {
+        text: 'text-yellow-700',
+        bg: 'bg-yellow-100',
+        badge: 'bg-yellow-500',
+        ring: 'ring-yellow-300',
+      };
+      return {
+        text: 'text-green-700',
+        bg: 'bg-green-100',
+        badge: 'bg-green-500',
+        ring: 'ring-green-300',
+      };
     }
     if (metric === 'heartRate') {
-      if (value < 60 || value > 100) return 'text-yellow-600';
-      return 'text-green-600';
+      if (value < 60 || value > 100) return {
+        text: 'text-yellow-700',
+        bg: 'bg-yellow-100',
+        badge: 'bg-yellow-500',
+        ring: 'ring-yellow-300',
+      };
+      return {
+        text: 'text-green-700',
+        bg: 'bg-green-100',
+        badge: 'bg-green-500',
+        ring: 'ring-green-300',
+      };
     }
     if (metric === 'bloodSugar') {
-      if (value < 70 || value > 140) return 'text-red-600';
-      if (value > 100) return 'text-yellow-600';
-      return 'text-green-600';
+      if (value < 70 || value > 140) return {
+        text: 'text-red-700',
+        bg: 'bg-red-100',
+        badge: 'bg-red-500',
+        ring: 'ring-red-300',
+      };
+      if (value > 100) return {
+        text: 'text-yellow-700',
+        bg: 'bg-yellow-100',
+        badge: 'bg-yellow-500',
+        ring: 'ring-yellow-300',
+      };
+      return {
+        text: 'text-green-700',
+        bg: 'bg-green-100',
+        badge: 'bg-green-500',
+        ring: 'ring-green-300',
+      };
     }
-    return 'text-gray-900';
+    return {
+      text: 'text-gray-900',
+      bg: 'bg-gray-100',
+      badge: 'bg-gray-500',
+      ring: 'ring-gray-300',
+    };
   };
 
   if (loading && logs.length === 0) {
@@ -117,30 +178,60 @@ const HealthLogs = () => {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-8 flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Health Logs</h1>
-          <p className="text-gray-600 mt-2">Track your vitals and health metrics</p>
+    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
+      {/* Header with Gradient */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-pink-600 via-rose-700 to-red-800 rounded-2xl shadow-xl p-6 md:p-8">
+        <div className="absolute inset-0 bg-grid-white/10 bg-[size:20px_20px]"></div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
+        
+        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm shadow-lg">
+                <HeartIconSolid className="w-7 h-7 text-pink-100 animate-pulse" />
+              </div>
+              <h1 className="text-3xl md:text-4xl font-bold text-white">Health Logs</h1>
+            </div>
+            <p className="text-pink-100 ml-14">Track your vitals and health metrics over time</p>
+          </div>
+          
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="group relative overflow-hidden px-6 py-3 bg-white text-pink-700 rounded-xl font-semibold shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-pink-400 to-rose-400 opacity-0 group-hover:opacity-10 transition-opacity"></div>
+            <div className="relative flex items-center gap-2">
+              {showForm ? (
+                <>
+                  <XMarkIcon className="w-5 h-5 transition-transform group-hover:rotate-90 duration-300" />
+                  <span>Close Form</span>
+                </>
+              ) : (
+                <>
+                  <PlusIcon className="w-5 h-5 transition-transform group-hover:rotate-90 duration-300" />
+                  <span>Add Log</span>
+                </>
+              )}
+            </div>
+          </button>
         </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-        >
-          <PlusIcon className="w-5 h-5" />
-          Add Log
-        </button>
       </div>
 
       {/* Add Log Form */}
       {showForm && (
-        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">New Health Log</h2>
+        <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 border-2 border-pink-200 animate-fadeIn">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-3 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl shadow-lg">
+              <SparklesIcon className="w-6 h-6 text-white" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900">New Health Log</h2>
+          </div>
+          
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
                   Blood Pressure (Systolic)
                 </label>
                 <input
@@ -149,11 +240,13 @@ const HealthLogs = () => {
                   value={formData.bloodPressureSystolic}
                   onChange={handleChange}
                   placeholder="120"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-300"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
                   Blood Pressure (Diastolic)
                 </label>
                 <input
@@ -162,11 +255,13 @@ const HealthLogs = () => {
                   value={formData.bloodPressureDiastolic}
                   onChange={handleChange}
                   placeholder="80"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-300"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                  <div className="w-2 h-2 bg-pink-500 rounded-full"></div>
                   Heart Rate (bpm)
                 </label>
                 <input
@@ -175,11 +270,13 @@ const HealthLogs = () => {
                   value={formData.heartRate}
                   onChange={handleChange}
                   placeholder="72"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-300"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                   Blood Sugar (mg/dL)
                 </label>
                 <input
@@ -188,11 +285,15 @@ const HealthLogs = () => {
                   value={formData.bloodSugar}
                   onChange={handleChange}
                   placeholder="100"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-300"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Weight (kg)</label>
+              
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  Weight (kg)
+                </label>
                 <input
                   name="weight"
                   type="number"
@@ -200,11 +301,13 @@ const HealthLogs = () => {
                   value={formData.weight}
                   onChange={handleChange}
                   placeholder="70"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-300"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                  <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
                   Temperature (°C)
                 </label>
                 <input
@@ -214,11 +317,13 @@ const HealthLogs = () => {
                   value={formData.temperature}
                   onChange={handleChange}
                   placeholder="37.0"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-300"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
                   Oxygen Saturation (%)
                 </label>
                 <input
@@ -227,35 +332,35 @@ const HealthLogs = () => {
                   value={formData.oxygenSaturation}
                   onChange={handleChange}
                   placeholder="98"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-300"
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700">Notes</label>
               <textarea
                 name="notes"
                 value={formData.notes}
                 onChange={handleChange}
                 rows="3"
-                placeholder="Any additional observations..."
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="Any additional observations or symptoms..."
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-300 resize-none"
               />
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex gap-3 pt-4">
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+                className="flex-1 px-6 py-3 bg-gradient-to-r from-pink-600 to-rose-600 text-white rounded-xl font-semibold hover:from-pink-700 hover:to-rose-700 transition-all duration-300 disabled:opacity-50 shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-95"
               >
-                {loading ? 'Saving...' : 'Save Log'}
+                {loading ? 'Saving...' : 'Save Health Log'}
               </button>
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+                className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-300 hover:scale-105 active:scale-95"
               >
                 Cancel
               </button>
@@ -266,105 +371,190 @@ const HealthLogs = () => {
 
       {/* Logs List */}
       {logs.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-md p-12 text-center">
-          <HeartIcon className="w-20 h-20 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500 text-lg">No health logs yet</p>
+        <div className="bg-white rounded-2xl shadow-lg p-12 text-center hover:shadow-xl transition-shadow duration-300">
+          <div className="inline-block p-6 bg-gradient-to-br from-pink-50 to-rose-50 rounded-full mb-4">
+            <HeartIcon className="w-20 h-20 text-pink-400" />
+          </div>
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">No Health Logs Yet</h3>
+          <p className="text-gray-600 mb-6">Start tracking your health by adding your first log entry</p>
           <button
             onClick={() => setShowForm(true)}
-            className="text-blue-600 hover:text-blue-700 mt-2 inline-block"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-pink-600 to-rose-600 text-white rounded-xl hover:from-pink-700 hover:to-rose-700 transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg font-semibold"
           >
+            <PlusIcon className="w-5 h-5" />
             Add your first log
           </button>
         </div>
       ) : (
-        <div className="space-y-4">
-          {logs.map((log) => (
-            <div key={log.id} className="bg-white rounded-xl shadow-md p-6">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <p className="text-lg font-semibold text-gray-900">
-                    {new Date(log.logDate).toLocaleDateString('en-US', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    {new Date(log.logDate).toLocaleTimeString('en-US', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </p>
+        <div className="space-y-6">
+          {logs.map((log, index) => (
+            <div 
+              key={log.id} 
+              className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6 border-2 border-transparent hover:border-pink-200 animate-fadeIn"
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-gradient-to-br from-pink-100 to-rose-100 rounded-xl">
+                    <CalendarIcon className="w-6 h-6 text-pink-600" />
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-gray-900">
+                      {new Date(log.logDate).toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      })}
+                    </p>
+                    <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
+                      <ClockIcon className="w-4 h-4" />
+                      <span>
+                        {new Date(log.logDate).toLocaleTimeString('en-US', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
+                    </div>
+                  </div>
                 </div>
+                
                 <button
                   onClick={() => handleDelete(log.id)}
-                  className="text-red-600 hover:text-red-700 text-sm font-semibold"
+                  className="group/delete flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-xl text-sm font-semibold transition-all duration-300 hover:scale-105 active:scale-95 shadow-md hover:shadow-lg"
                 >
+                  <TrashIcon className="w-4 h-4 transition-transform group-hover/delete:rotate-12" />
                   Delete
                 </button>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                 {log.bloodPressureSystolic && log.bloodPressureDiastolic && (
-                  <div className="bg-red-50 rounded-lg p-3">
-                    <p className="text-sm text-gray-600 mb-1">Blood Pressure</p>
-                    <p
-                      className={`text-lg font-bold ${getStatusColor(
-                        'bloodPressure',
-                        `${log.bloodPressureSystolic}/${log.bloodPressureDiastolic}`
-                      )}`}
-                    >
-                      {log.bloodPressureSystolic}/{log.bloodPressureDiastolic}
-                    </p>
-                    <p className="text-xs text-gray-500">mmHg</p>
+                  <div className={`group/card relative overflow-hidden rounded-xl p-4 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 ${
+                    getStatusColor('bloodPressure', `${log.bloodPressureSystolic}/${log.bloodPressureDiastolic}`).bg
+                  }`}>
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-white/20 rounded-full -mr-10 -mt-10"></div>
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className={`p-1.5 ${getStatusColor('bloodPressure', `${log.bloodPressureSystolic}/${log.bloodPressureDiastolic}`).badge} rounded-lg shadow-md`}>
+                          <HeartIconSolid className="w-4 h-4 text-white" />
+                        </div>
+                        <p className="text-xs font-semibold text-gray-700">Blood Pressure</p>
+                      </div>
+                      <p className={`text-2xl font-bold mb-1 ${
+                        getStatusColor('bloodPressure', `${log.bloodPressureSystolic}/${log.bloodPressureDiastolic}`).text
+                      }`}>
+                        {log.bloodPressureSystolic}/{log.bloodPressureDiastolic}
+                      </p>
+                      <p className="text-xs font-medium text-gray-600">mmHg</p>
+                    </div>
                   </div>
                 )}
+                
                 {log.heartRate && (
-                  <div className="bg-pink-50 rounded-lg p-3">
-                    <p className="text-sm text-gray-600 mb-1">Heart Rate</p>
-                    <p className={`text-lg font-bold ${getStatusColor('heartRate', log.heartRate)}`}>
-                      {log.heartRate}
-                    </p>
-                    <p className="text-xs text-gray-500">bpm</p>
+                  <div className={`group/card relative overflow-hidden rounded-xl p-4 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 ${
+                    getStatusColor('heartRate', log.heartRate).bg
+                  }`}>
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-white/20 rounded-full -mr-10 -mt-10"></div>
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className={`p-1.5 ${getStatusColor('heartRate', log.heartRate).badge} rounded-lg shadow-md animate-pulse`}>
+                          <HeartIconSolid className="w-4 h-4 text-white" />
+                        </div>
+                        <p className="text-xs font-semibold text-gray-700">Heart Rate</p>
+                      </div>
+                      <p className={`text-2xl font-bold mb-1 ${getStatusColor('heartRate', log.heartRate).text}`}>
+                        {log.heartRate}
+                      </p>
+                      <p className="text-xs font-medium text-gray-600">bpm</p>
+                    </div>
                   </div>
                 )}
+                
                 {log.bloodSugar && (
-                  <div className="bg-blue-50 rounded-lg p-3">
-                    <p className="text-sm text-gray-600 mb-1">Blood Sugar</p>
-                    <p className={`text-lg font-bold ${getStatusColor('bloodSugar', log.bloodSugar)}`}>
-                      {log.bloodSugar}
-                    </p>
-                    <p className="text-xs text-gray-500">mg/dL</p>
+                  <div className={`group/card relative overflow-hidden rounded-xl p-4 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 ${
+                    getStatusColor('bloodSugar', log.bloodSugar).bg
+                  }`}>
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-white/20 rounded-full -mr-10 -mt-10"></div>
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className={`p-1.5 ${getStatusColor('bloodSugar', log.bloodSugar).badge} rounded-lg shadow-md`}>
+                          <BeakerIcon className="w-4 h-4 text-white" />
+                        </div>
+                        <p className="text-xs font-semibold text-gray-700">Blood Sugar</p>
+                      </div>
+                      <p className={`text-2xl font-bold mb-1 ${getStatusColor('bloodSugar', log.bloodSugar).text}`}>
+                        {log.bloodSugar}
+                      </p>
+                      <p className="text-xs font-medium text-gray-600">mg/dL</p>
+                    </div>
                   </div>
                 )}
+                
                 {log.weight && (
-                  <div className="bg-green-50 rounded-lg p-3">
-                    <p className="text-sm text-gray-600 mb-1">Weight</p>
-                    <p className="text-lg font-bold text-gray-900">{log.weight}</p>
-                    <p className="text-xs text-gray-500">kg</p>
+                  <div className="group/card relative overflow-hidden bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-white/20 rounded-full -mr-10 -mt-10"></div>
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="p-1.5 bg-green-500 rounded-lg shadow-md">
+                          <ScaleIcon className="w-4 h-4 text-white" />
+                        </div>
+                        <p className="text-xs font-semibold text-gray-700">Weight</p>
+                      </div>
+                      <p className="text-2xl font-bold text-green-700 mb-1">{log.weight}</p>
+                      <p className="text-xs font-medium text-gray-600">kg</p>
+                    </div>
                   </div>
                 )}
+                
                 {log.temperature && (
-                  <div className="bg-yellow-50 rounded-lg p-3">
-                    <p className="text-sm text-gray-600 mb-1">Temperature</p>
-                    <p className="text-lg font-bold text-gray-900">{log.temperature}</p>
-                    <p className="text-xs text-gray-500">°C</p>
+                  <div className="group/card relative overflow-hidden bg-gradient-to-br from-yellow-50 to-amber-50 rounded-xl p-4 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-white/20 rounded-full -mr-10 -mt-10"></div>
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="p-1.5 bg-yellow-500 rounded-lg shadow-md">
+                          <FireIconSolid className="w-4 h-4 text-white" />
+                        </div>
+                        <p className="text-xs font-semibold text-gray-700">Temperature</p>
+                      </div>
+                      <p className="text-2xl font-bold text-yellow-700 mb-1">{log.temperature}</p>
+                      <p className="text-xs font-medium text-gray-600">°C</p>
+                    </div>
                   </div>
                 )}
+                
                 {log.oxygenSaturation && (
-                  <div className="bg-purple-50 rounded-lg p-3">
-                    <p className="text-sm text-gray-600 mb-1">O₂ Saturation</p>
-                    <p className="text-lg font-bold text-gray-900">{log.oxygenSaturation}</p>
-                    <p className="text-xs text-gray-500">%</p>
+                  <div className="group/card relative overflow-hidden bg-gradient-to-br from-purple-50 to-violet-50 rounded-xl p-4 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-white/20 rounded-full -mr-10 -mt-10"></div>
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="p-1.5 bg-purple-500 rounded-lg shadow-md">
+                          <BoltIcon className="w-4 h-4 text-white" />
+                        </div>
+                        <p className="text-xs font-semibold text-gray-700">O₂ Saturation</p>
+                      </div>
+                      <p className="text-2xl font-bold text-purple-700 mb-1">{log.oxygenSaturation}</p>
+                      <p className="text-xs font-medium text-gray-600">%</p>
+                    </div>
                   </div>
                 )}
               </div>
 
               {log.notes && (
-                <div className="mt-4 pt-4 border-t">
-                  <p className="text-sm text-gray-600 mb-1">Notes</p>
-                  <p className="text-gray-900">{log.notes}</p>
+                <div className="mt-6 pt-6 border-t-2 border-gray-100">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-gradient-to-br from-gray-100 to-slate-100 rounded-lg">
+                      <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-gray-700 mb-1">Additional Notes</p>
+                      <p className="text-gray-900 leading-relaxed bg-gradient-to-r from-gray-50 to-slate-50 p-3 rounded-lg">
+                        {log.notes}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

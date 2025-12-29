@@ -3,7 +3,24 @@ import { useAuth } from '../context/AuthContext';
 import { profileAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { CameraIcon, PencilIcon } from '@heroicons/react/24/outline';
+import { 
+  CameraIcon, 
+  PencilIcon, 
+  UserCircleIcon,
+  HeartIcon,
+  ScaleIcon,
+  PhoneIcon,
+  MapPinIcon,
+  CalendarIcon,
+  ShieldCheckIcon,
+  BeakerIcon,
+  ClipboardDocumentCheckIcon,
+  ExclamationTriangleIcon
+} from '@heroicons/react/24/outline';
+import { 
+  CheckBadgeIcon,
+  HeartIcon as HeartIconSolid 
+} from '@heroicons/react/24/solid';
 
 const Profile = () => {
   const { user } = useAuth();
@@ -116,42 +133,59 @@ const Profile = () => {
   }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="mb-8 flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Profile</h1>
-          <p className="text-gray-600 mt-2">Manage your personal and medical information</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-6">
+      {/* Gradient Header */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white py-16 px-6 mb-8 shadow-2xl rounded-2xl">
+        <div className="absolute inset-0 bg-grid-white/10"></div>
+        <div className="absolute top-10 right-10 w-72 h-72 bg-white/5 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-10 left-10 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
+        
+        <div className="max-w-5xl mx-auto relative z-10">
+          <div className="flex justify-between items-start">
+            <div className="flex items-center gap-4 animate-fadeIn">
+              <div className="p-4 bg-white/10 backdrop-blur-sm rounded-2xl ring-2 ring-white/20">
+                <UserCircleIcon className="w-12 h-12" />
+              </div>
+              <div>
+                <h1 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white to-blue-100">
+                  Your Profile
+                </h1>
+                <p className="text-blue-100 text-lg">Manage your personal and medical information</p>
+              </div>
+            </div>
+            {!editing && (
+              <button
+                onClick={() => setEditing(true)}
+                className="flex items-center gap-2 px-6 py-3 bg-white text-blue-600 rounded-xl hover:bg-blue-50 transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg font-semibold"
+              >
+                <PencilIcon className="w-5 h-5" />
+                Edit Profile
+              </button>
+            )}
+          </div>
         </div>
-        {!editing && (
-          <button
-            onClick={() => setEditing(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-          >
-            <PencilIcon className="w-5 h-5" />
-            Edit Profile
-          </button>
-        )}
       </div>
+
+      <div className="p-6 max-w-5xl mx-auto">
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Profile Card */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-xl shadow-md p-6 text-center">
+          <div className="bg-white rounded-2xl shadow-xl p-8 text-center hover:shadow-2xl transition-all duration-300 border-2 border-blue-100 animate-fadeIn">
             {/* Profile Picture */}
-            <div className="relative inline-block mb-4">
-              <div className="w-32 h-32 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-4xl font-bold">
+            <div className="relative inline-block mb-6">
+              <div className="w-36 h-36 rounded-full bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-500 flex items-center justify-center text-white text-5xl font-bold ring-4 ring-blue-200 ring-offset-4 shadow-xl">
                 {profile?.profilePicture ? (
                   <img
                     src={profile.profilePicture}
                     alt="Profile"
-                    className="w-32 h-32 rounded-full object-cover"
+                    className="w-36 h-36 rounded-full object-cover"
                   />
                 ) : (
                   profile?.firstName?.charAt(0)?.toUpperCase() || 'U'
                 )}
               </div>
-              <label className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-700 transition">
+              <label className="absolute bottom-2 right-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-3 rounded-full cursor-pointer hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:scale-110 active:scale-95 ring-2 ring-white">
                 <CameraIcon className="w-5 h-5" />
                 <input
                   type="file"
@@ -162,35 +196,48 @@ const Profile = () => {
               </label>
             </div>
 
-            <h2 className="text-xl font-bold text-gray-900">
+            <h2 className="text-2xl font-bold text-gray-900 mb-1">
               {profile?.firstName && profile?.lastName 
                 ? `${profile.firstName} ${profile.lastName}` 
                 : profile?.firstName || 'User'}
             </h2>
-            <p className="text-gray-600 text-sm mt-1">{user?.email}</p>
+            <p className="text-gray-600 text-sm mb-2">{user?.email}</p>
+            <div className="inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 text-xs font-bold rounded-full mt-2">
+              <CheckBadgeIcon className="w-4 h-4" />
+              Verified Account
+            </div>
 
             {/* Quick Stats */}
-            <div className="mt-6 space-y-3">
+            <div className="mt-8 space-y-3">
               {profile?.dateOfBirth && (
-                <div className="bg-blue-50 rounded-lg p-3">
-                  <p className="text-sm text-gray-600">Age</p>
-                  <p className="text-lg font-semibold text-gray-900">
-                    {profile.age || calculateAge(profile.dateOfBirth)} years
+                <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-4 border-2 border-blue-200 hover:border-blue-300 transition-all duration-300 hover:shadow-md">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <CalendarIcon className="w-5 h-5 text-blue-600" />
+                    <p className="text-sm font-semibold text-blue-900">Age</p>
+                  </div>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {profile.age || calculateAge(profile.dateOfBirth)} <span className="text-sm text-gray-600">years</span>
                   </p>
                 </div>
               )}
               {profile?.height && profile?.weight && (
-                <div className="bg-green-50 rounded-lg p-3">
-                  <p className="text-sm text-gray-600">BMI</p>
-                  <p className="text-lg font-semibold text-gray-900">
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 border-2 border-green-200 hover:border-green-300 transition-all duration-300 hover:shadow-md">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <ScaleIcon className="w-5 h-5 text-green-600" />
+                    <p className="text-sm font-semibold text-green-900">BMI</p>
+                  </div>
+                  <p className="text-2xl font-bold text-gray-900">
                     {profile.bmi?.toFixed(1) || calculateBMI(profile.height, profile.weight)}
                   </p>
                 </div>
               )}
               {medicalHistory?.bloodType && (
-                <div className="bg-red-50 rounded-lg p-3">
-                  <p className="text-sm text-gray-600">Blood Type</p>
-                  <p className="text-lg font-semibold text-gray-900">
+                <div className="bg-gradient-to-r from-red-50 to-pink-50 rounded-xl p-4 border-2 border-red-200 hover:border-red-300 transition-all duration-300 hover:shadow-md">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <BeakerIcon className="w-5 h-5 text-red-600" />
+                    <p className="text-sm font-semibold text-red-900">Blood Type</p>
+                  </div>
+                  <p className="text-2xl font-bold text-gray-900">
                     {medicalHistory.bloodType}
                   </p>
                 </div>
@@ -202,68 +249,93 @@ const Profile = () => {
         {/* Details */}
         <div className="lg:col-span-2 space-y-6">
           {/* Personal Information */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Personal Information</h3>
+          <div className="bg-white rounded-2xl shadow-xl p-8 border-2 border-blue-100 hover:shadow-2xl transition-all duration-300 animate-fadeIn" style={{ animationDelay: '100ms' }}>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg">
+                <UserCircleIcon className="w-6 h-6 text-blue-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900">Personal Information</h3>
+            </div>
 
             {editing ? (
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                  <label className="flex items-center gap-2 text-sm font-semibold text-blue-900 mb-2">
+                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                    Full Name
+                  </label>
                   <input
                     name="fullName"
                     value={formData.fullName}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 hover:border-blue-300"
+                    placeholder="Enter your full name"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                  <label className="flex items-center gap-2 text-sm font-semibold text-indigo-900 mb-2">
+                    <span className="w-2 h-2 bg-indigo-500 rounded-full"></span>
+                    Phone Number
+                  </label>
                   <input
                     name="phoneNumber"
                     value={formData.phoneNumber}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 hover:border-indigo-300"
+                    placeholder="Enter your phone number"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                  <label className="flex items-center gap-2 text-sm font-semibold text-purple-900 mb-2">
+                    <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+                    Address
+                  </label>
                   <input
                     name="address"
                     value={formData.address}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300 hover:border-purple-300"
+                    placeholder="Enter your address"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Emergency Contact</label>
+                  <label className="flex items-center gap-2 text-sm font-semibold text-red-900 mb-2">
+                    <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                    Emergency Contact
+                  </label>
                   <input
                     name="emergencyContact"
                     value={formData.emergencyContact}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-300 hover:border-red-300"
+                    placeholder="Enter emergency contact name"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Emergency Phone</label>
+                  <label className="flex items-center gap-2 text-sm font-semibold text-pink-900 mb-2">
+                    <span className="w-2 h-2 bg-pink-500 rounded-full"></span>
+                    Emergency Phone
+                  </label>
                   <input
                     name="emergencyPhone"
                     value={formData.emergencyPhone}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-300 hover:border-pink-300"
+                    placeholder="Enter emergency contact phone"
                   />
                 </div>
                 <div className="flex gap-3 pt-4">
                   <button
                     type="submit"
                     disabled={loading}
-                    className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading ? 'Saving...' : 'Save Changes'}
                   </button>
                   <button
                     type="button"
                     onClick={() => setEditing(false)}
-                    className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+                    className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-300 hover:scale-105 active:scale-95 font-semibold"
                   >
                     Cancel
                   </button>
@@ -271,47 +343,75 @@ const Profile = () => {
               </form>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-600">Gender</p>
-                  <p className="font-semibold text-gray-900">{profile?.gender || 'Not set'}</p>
+                <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-200">
+                  <div className="flex items-center gap-2 mb-1">
+                    <UserCircleIcon className="w-4 h-4 text-blue-600" />
+                    <p className="text-xs font-semibold text-blue-900">Gender</p>
+                  </div>
+                  <p className="font-bold text-gray-900">{profile?.gender || 'Not set'}</p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600">Date of Birth</p>
-                  <p className="font-semibold text-gray-900">
+                <div className="p-4 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-xl border border-indigo-200">
+                  <div className="flex items-center gap-2 mb-1">
+                    <CalendarIcon className="w-4 h-4 text-indigo-600" />
+                    <p className="text-xs font-semibold text-indigo-900">Date of Birth</p>
+                  </div>
+                  <p className="font-bold text-gray-900">
                     {profile?.dateOfBirth
-                      ? new Date(profile.dateOfBirth).toLocaleDateString()
+                      ? new Date(profile.dateOfBirth).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric'
+                        })
                       : 'Not set'}
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600">Phone</p>
-                  <p className="font-semibold text-gray-900">{profile?.phone || 'Not set'}</p>
+                <div className="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl border border-purple-200">
+                  <div className="flex items-center gap-2 mb-1">
+                    <PhoneIcon className="w-4 h-4 text-purple-600" />
+                    <p className="text-xs font-semibold text-purple-900">Phone</p>
+                  </div>
+                  <p className="font-bold text-gray-900">{profile?.phone || 'Not set'}</p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600">Address</p>
-                  <p className="font-semibold text-gray-900">{profile?.address || 'Not set'}</p>
+                <div className="p-4 bg-gradient-to-r from-pink-50 to-purple-50 rounded-xl border border-pink-200">
+                  <div className="flex items-center gap-2 mb-1">
+                    <MapPinIcon className="w-4 h-4 text-pink-600" />
+                    <p className="text-xs font-semibold text-pink-900">Address</p>
+                  </div>
+                  <p className="font-bold text-gray-900 text-sm">{profile?.address || 'Not set'}</p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600">Emergency Contact</p>
-                  <p className="font-semibold text-gray-900">
+                <div className="p-4 bg-gradient-to-r from-red-50 to-pink-50 rounded-xl border border-red-200">
+                  <div className="flex items-center gap-2 mb-1">
+                    <ShieldCheckIcon className="w-4 h-4 text-red-600" />
+                    <p className="text-xs font-semibold text-red-900">Emergency Contact</p>
+                  </div>
+                  <p className="font-bold text-gray-900">
                     {profile?.emergencyContactName || 'Not set'}
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600">Emergency Phone</p>
-                  <p className="font-semibold text-gray-900">
+                <div className="p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl border border-orange-200">
+                  <div className="flex items-center gap-2 mb-1">
+                    <PhoneIcon className="w-4 h-4 text-orange-600" />
+                    <p className="text-xs font-semibold text-orange-900">Emergency Phone</p>
+                  </div>
+                  <p className="font-bold text-gray-900">
                     {profile?.emergencyContactPhone || 'Not set'}
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600">Height</p>
-                  <p className="font-semibold text-gray-900">
+                <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200">
+                  <div className="flex items-center gap-2 mb-1">
+                    <ScaleIcon className="w-4 h-4 text-green-600" />
+                    <p className="text-xs font-semibold text-green-900">Height</p>
+                  </div>
+                  <p className="font-bold text-gray-900">
                     {profile?.height ? `${profile.height} cm` : 'Not set'}
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600">Weight</p>
-                  <p className="font-semibold text-gray-900">
+                <div className="p-4 bg-gradient-to-r from-teal-50 to-green-50 rounded-xl border border-teal-200">
+                  <div className="flex items-center gap-2 mb-1">
+                    <ScaleIcon className="w-4 h-4 text-teal-600" />
+                    <p className="text-xs font-semibold text-teal-900">Weight</p>
+                  </div>
+                  <p className="font-bold text-gray-900">
                     {profile?.weight ? `${profile.weight} kg` : 'Not set'}
                   </p>
                 </div>
@@ -321,41 +421,61 @@ const Profile = () => {
 
           {/* Medical History */}
           {medicalHistory && (
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Medical History</h3>
+            <div className="bg-white rounded-2xl shadow-xl p-8 border-2 border-red-100 hover:shadow-2xl transition-all duration-300 animate-fadeIn" style={{ animationDelay: '200ms' }}>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-gradient-to-br from-red-100 to-pink-100 rounded-lg">
+                  <ClipboardDocumentCheckIcon className="w-6 h-6 text-red-600" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900">Medical History</h3>
+              </div>
               <div className="space-y-4">
                 {medicalHistory.allergies && (
-                  <div>
-                    <p className="text-sm text-gray-600">Allergies</p>
-                    <p className="text-gray-900">{medicalHistory.allergies}</p>
+                  <div className="p-4 bg-gradient-to-r from-yellow-50 to-amber-50 rounded-xl border-2 border-yellow-300 shadow-md">
+                    <div className="flex items-start gap-2 mb-2">
+                      <ExclamationTriangleIcon className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-sm font-bold text-yellow-900">Allergies</p>
+                    </div>
+                    <p className="text-gray-900 leading-relaxed ml-7">{medicalHistory.allergies}</p>
                   </div>
                 )}
                 {medicalHistory.chronicConditions && (
-                  <div>
-                    <p className="text-sm text-gray-600">Chronic Conditions</p>
-                    <p className="text-gray-900">{medicalHistory.chronicConditions}</p>
+                  <div className="p-4 bg-gradient-to-r from-red-50 to-pink-50 rounded-xl border border-red-200">
+                    <div className="flex items-start gap-2 mb-2">
+                      <HeartIconSolid className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-sm font-bold text-red-900">Chronic Conditions</p>
+                    </div>
+                    <p className="text-gray-900 leading-relaxed ml-7">{medicalHistory.chronicConditions}</p>
                   </div>
                 )}
                 {medicalHistory.currentMedications && (
-                  <div>
-                    <p className="text-sm text-gray-600">Current Medications</p>
-                    <p className="text-gray-900">{medicalHistory.currentMedications}</p>
+                  <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+                    <div className="flex items-start gap-2 mb-2">
+                      <BeakerIcon className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-sm font-bold text-blue-900">Current Medications</p>
+                    </div>
+                    <p className="text-gray-900 leading-relaxed ml-7">{medicalHistory.currentMedications}</p>
                   </div>
                 )}
                 {medicalHistory.surgeries && (
-                  <div>
-                    <p className="text-sm text-gray-600">Past Surgeries</p>
-                    <p className="text-gray-900">{medicalHistory.surgeries}</p>
+                  <div className="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl border border-purple-200">
+                    <div className="flex items-start gap-2 mb-2">
+                      <ClipboardDocumentCheckIcon className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-sm font-bold text-purple-900">Past Surgeries</p>
+                    </div>
+                    <p className="text-gray-900 leading-relaxed ml-7">{medicalHistory.surgeries}</p>
                   </div>
                 )}
                 {medicalHistory.healthGoals && medicalHistory.healthGoals.length > 0 && (
-                  <div>
-                    <p className="text-sm text-gray-600 mb-2">Health Goals</p>
-                    <div className="flex flex-wrap gap-2">
+                  <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200">
+                    <div className="flex items-start gap-2 mb-3">
+                      <HeartIcon className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-sm font-bold text-green-900">Health Goals</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2 ml-7">
                       {medicalHistory.healthGoals.map((goal, index) => (
                         <span
                           key={index}
-                          className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                          className="px-4 py-2 bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 rounded-full text-sm font-semibold ring-2 ring-green-300 ring-opacity-30 hover:scale-105 transition-transform duration-300"
                         >
                           {goal}
                         </span>
@@ -367,6 +487,7 @@ const Profile = () => {
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   );
