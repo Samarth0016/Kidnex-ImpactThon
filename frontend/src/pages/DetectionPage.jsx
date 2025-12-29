@@ -481,28 +481,82 @@ const DetectionPage = () => {
                         
                         <div className="bg-white/80 backdrop-blur-sm rounded-xl p-5 shadow-md border border-purple-200">
                           <div className="prose prose-sm max-w-none 
-                            prose-headings:text-gray-900 prose-headings:font-bold prose-headings:mb-3 prose-headings:mt-4 first:prose-headings:mt-0
-                            prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-3
-                            prose-li:text-gray-700 prose-li:mb-2 prose-li:leading-relaxed
-                            prose-strong:text-gray-900 prose-strong:font-bold
-                            prose-ul:space-y-2 prose-ul:my-3
-                            prose-ol:space-y-2 prose-ol:my-3
-                            marker:text-purple-600">
+                            prose-headings:text-gray-900 prose-headings:font-bold prose-headings:mb-4 prose-headings:mt-5 first:prose-headings:mt-0
+                            prose-h1:text-xl prose-h1:border-b-2 prose-h1:border-purple-300 prose-h1:pb-2
+                            prose-h2:text-lg prose-h2:text-purple-900
+                            prose-h3:text-base prose-h3:text-gray-800
+                            prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-4 prose-p:text-base
+                            prose-li:text-gray-700 prose-li:mb-2 prose-li:leading-relaxed prose-li:text-base
+                            prose-strong:text-purple-900 prose-strong:font-extrabold prose-strong:px-1 prose-strong:bg-purple-100 prose-strong:rounded
+                            prose-ul:space-y-2 prose-ul:my-4
+                            prose-ol:space-y-3 prose-ol:my-4 prose-ol:list-decimal prose-ol:pl-6
+                            marker:text-purple-600 marker:font-bold">
                             <ReactMarkdown
                               components={{
-                                h1: ({node, ...props}) => <h1 className="text-lg flex items-center gap-2" {...props} />,
-                                h2: ({node, ...props}) => <h2 className="text-base flex items-center gap-2" {...props} />,
-                                h3: ({node, ...props}) => <h3 className="text-sm flex items-center gap-2" {...props} />,
-                                ul: ({node, ...props}) => <ul className="space-y-2 my-3" {...props} />,
-                                ol: ({node, ...props}) => <ol className="space-y-2 my-3" {...props} />,
-                                li: ({node, ...props}) => (
-                                  <li className="flex items-start gap-2 bg-gradient-to-r from-purple-50 to-transparent p-2 rounded-lg hover:from-purple-100 transition-colors duration-200" {...props}>
-                                    <span className="flex-shrink-0 w-1.5 h-1.5 bg-purple-500 rounded-full mt-1.5"></span>
-                                    <span className="flex-1">{props.children}</span>
-                                  </li>
+                                h1: ({node, ...props}) => (
+                                  <h1 className="text-xl font-bold flex items-center gap-2 text-gray-900 border-b-2 border-purple-300 pb-2 mb-4" {...props} />
                                 ),
-                                p: ({node, ...props}) => <p className="leading-relaxed mb-3" {...props} />,
-                                strong: ({node, ...props}) => <strong className="font-bold text-purple-900" {...props} />,
+                                h2: ({node, ...props}) => (
+                                  <h2 className="text-lg font-bold flex items-center gap-2 text-purple-900 mt-5 mb-3" {...props} />
+                                ),
+                                h3: ({node, ...props}) => (
+                                  <h3 className="text-base font-semibold flex items-center gap-2 text-gray-800 mt-4 mb-2" {...props} />
+                                ),
+                                ul: ({node, ...props}) => (
+                                  <ul className="space-y-2 my-4" {...props} />
+                                ),
+                                ol: ({node, ...props}) => (
+                                  <ol className="space-y-3 my-4 list-decimal pl-6" {...props} />
+                                ),
+                                li: ({node, ...props}) => {
+                                  const parent = node?.position?.start?.line;
+                                  const isOrdered = node?.parent?.tagName === 'ol';
+                                  return (
+                                    <li className={`flex items-start gap-3 bg-gradient-to-r from-purple-50 to-transparent p-3 rounded-lg hover:from-purple-100 transition-colors duration-200 ${isOrdered ? 'ml-0' : ''}`} {...props}>
+                                      {!isOrdered && <span className="flex-shrink-0 w-2 h-2 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full mt-2"></span>}
+                                      <span className="flex-1 text-base leading-relaxed">{props.children}</span>
+                                    </li>
+                                  );
+                                },
+                                p: ({node, ...props}) => {
+                                  const text = node?.children?.[0]?.value || '';
+                                  // Check if paragraph contains urgent/important keywords
+                                  const isUrgent = /immediate|urgent|critical|emergency|as soon as possible|don't hesitate/i.test(text);
+                                  const isImportant = /important|essential|crucial|paramount|must|need to|should/i.test(text);
+                                  
+                                  if (isUrgent) {
+                                    return (
+                                      <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg my-4 shadow-sm">
+                                        <div className="flex items-start gap-3">
+                                          <ExclamationTriangleIcon className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5 animate-pulse" />
+                                          <p className="leading-relaxed text-base text-red-900 font-medium" {...props} />
+                                        </div>
+                                      </div>
+                                    );
+                                  }
+                                  
+                                  if (isImportant) {
+                                    return (
+                                      <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg my-4 shadow-sm">
+                                        <div className="flex items-start gap-3">
+                                          <ShieldCheckIcon className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" />
+                                          <p className="leading-relaxed text-base text-amber-900 font-medium" {...props} />
+                                        </div>
+                                      </div>
+                                    );
+                                  }
+                                  
+                                  return <p className="leading-relaxed mb-4 text-base text-gray-700" {...props} />;
+                                },
+                                strong: ({node, ...props}) => (
+                                  <strong className="font-extrabold text-purple-900 px-1.5 py-0.5 bg-purple-100 rounded" {...props} />
+                                ),
+                                em: ({node, ...props}) => (
+                                  <em className="italic text-purple-800" {...props} />
+                                ),
+                                blockquote: ({node, ...props}) => (
+                                  <blockquote className="border-l-4 border-blue-500 pl-4 italic text-gray-600 bg-blue-50 py-3 rounded-r-lg my-4" {...props} />
+                                ),
                               }}
                             >
                               {message.detection.aiSuggestions}
@@ -514,7 +568,57 @@ const DetectionPage = () => {
                   )}
                 </div>
               ) : (
-                <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                <div className="prose prose-sm max-w-none 
+                  prose-headings:text-gray-900 prose-headings:font-bold prose-headings:mb-3 prose-headings:mt-4 first:prose-headings:mt-0
+                  prose-h1:text-lg prose-h1:text-gray-900
+                  prose-h2:text-base prose-h2:text-gray-800
+                  prose-h3:text-sm prose-h3:text-gray-700
+                  prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-3 prose-p:text-sm
+                  prose-li:text-gray-700 prose-li:mb-2 prose-li:leading-relaxed prose-li:text-sm
+                  prose-strong:text-gray-900 prose-strong:font-extrabold prose-strong:px-1 prose-strong:bg-blue-100 prose-strong:rounded
+                  prose-ul:space-y-2 prose-ul:my-3
+                  prose-ol:space-y-2 prose-ol:my-3 prose-ol:list-decimal prose-ol:pl-5
+                  marker:text-blue-600 marker:font-semibold">
+                  <ReactMarkdown
+                    components={{
+                      h1: ({node, ...props}) => (
+                        <h1 className="text-lg font-bold text-gray-900 mb-3 mt-4 first:mt-0" {...props} />
+                      ),
+                      h2: ({node, ...props}) => (
+                        <h2 className="text-base font-bold text-gray-800 mb-2 mt-3" {...props} />
+                      ),
+                      h3: ({node, ...props}) => (
+                        <h3 className="text-sm font-semibold text-gray-700 mb-2 mt-3" {...props} />
+                      ),
+                      ul: ({node, ...props}) => (
+                        <ul className="space-y-2 my-3" {...props} />
+                      ),
+                      ol: ({node, ...props}) => (
+                        <ol className="space-y-2 my-3 list-decimal pl-5" {...props} />
+                      ),
+                      li: ({node, ...props}) => {
+                        const isOrdered = node?.parent?.tagName === 'ol';
+                        return (
+                          <li className={`flex items-start gap-2 ${isOrdered ? 'ml-0' : ''}`} {...props}>
+                            {!isOrdered && <span className="flex-shrink-0 w-1.5 h-1.5 bg-blue-500 rounded-full mt-1.5"></span>}
+                            <span className="flex-1 text-sm leading-relaxed">{props.children}</span>
+                          </li>
+                        );
+                      },
+                      p: ({node, ...props}) => (
+                        <p className="leading-relaxed mb-3 text-sm" {...props} />
+                      ),
+                      strong: ({node, ...props}) => (
+                        <strong className="font-extrabold text-gray-900 px-1 py-0.5 bg-blue-100 rounded" {...props} />
+                      ),
+                      em: ({node, ...props}) => (
+                        <em className="italic text-gray-600" {...props} />
+                      ),
+                    }}
+                  >
+                    {message.content}
+                  </ReactMarkdown>
+                </div>
               )}
 
               <p className="text-xs mt-3 opacity-60 flex items-center gap-1">

@@ -123,21 +123,6 @@ const Layout = () => {
                   </NavLink>
                 ))}
               </nav>
-              
-              {/* Quick Stats in Sidebar */}
-              <div className="mt-8 pt-6 border-t-2 border-gray-100">
-                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Quick Access</h3>
-                <div className="space-y-2">
-                  <div className="p-3 bg-blue-50 rounded-xl border border-blue-200">
-                    <p className="text-xs text-blue-900 font-semibold mb-1">Health Score</p>
-                    <p className="text-lg font-bold text-blue-600">85/100</p>
-                  </div>
-                  <div className="p-3 bg-green-50 rounded-xl border border-green-200">
-                    <p className="text-xs text-green-900 font-semibold mb-1">Active Medications</p>
-                    <p className="text-lg font-bold text-green-600">3</p>
-                  </div>
-                </div>
-              </div>
             </div>
           </aside>
 
