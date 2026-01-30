@@ -1,5 +1,6 @@
 import prisma from '../config/database.js';
 import { generateChatResponse } from '../config/gemini.js';
+import { generateNvidiaChatResponse, isNvidiaConfigured } from '../config/nvidia.js';
 
 /**
  * @desc    Send message to AI chatbot
@@ -9,9 +10,9 @@ import { generateChatResponse } from '../config/gemini.js';
 export const sendMessage = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const { message } = req.body;
+    const { message, model = 'gemini' } = req.body;
 
-    console.log('💬 Chat message from user:', userId);
+    console.log(`💬 Chat message from user: ${userId}, Model: ${model}`);
 
     // Save user message
     const userMessage = await prisma.chatMessage.create({
@@ -54,13 +55,24 @@ export const sendMessage = async (req, res, next) => {
       })),
     };
 
-    // Generate AI response
-    console.log('🤖 Generating AI response...');
-    const aiResponseText = await generateChatResponse(
-      message,
-      context,
-      conversationHistory.reverse()
-    );
+    // Generate AI response based on selected model
+    console.log(`🤖 Generating AI response using ${model}...`);
+    let aiResponseText;
+    
+    if (model === 'nvidia' && isNvidiaConfigured()) {
+      aiResponseText = await generateNvidiaChatResponse(
+        message,
+        context,
+        conversationHistory.reverse()
+      );
+    } else {
+      // Default to Gemini
+      aiResponseText = await generateChatResponse(
+        message,
+        context,
+        conversationHistory.reverse()
+      );
+    }
 
     // Save AI response
     const aiMessage = await prisma.chatMessage.create({
@@ -72,7 +84,7 @@ export const sendMessage = async (req, res, next) => {
       },
     });
 
-    console.log('✅ AI response generated');
+    console.log(`✅ AI response generated using ${model}`);
 
     res.status(200).json({
       success: true,
@@ -82,6 +94,7 @@ export const sendMessage = async (req, res, next) => {
           id: aiMessage.id,
           message: aiMessage.message,
           createdAt: aiMessage.createdAt,
+          model: model,
         },
       },
     });

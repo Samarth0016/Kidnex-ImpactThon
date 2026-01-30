@@ -8,6 +8,7 @@ import {
   PaperAirplaneIcon,
   XMarkIcon,
   SparklesIcon,
+  ChevronDownIcon,
 } from '@heroicons/react/24/outline';
 import ReactMarkdown from 'react-markdown';
 
@@ -19,7 +20,16 @@ const Chatbot = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [selectedModel, setSelectedModel] = useState(() => {
+    return localStorage.getItem('aiModel') || 'gemini';
+  });
+  const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
   const messagesEndRef = useRef(null);
+
+  const AI_MODELS = [
+    { id: 'gemini', name: 'Gemini', icon: '✨', color: 'blue' },
+    { id: 'nvidia', name: 'BioMistral', icon: '🧬', color: 'green' },
+  ];
 
   // Only show chatbot on protected /app routes when authenticated
   const shouldShowChatbot = isAuthenticated && hasProfile && location.pathname.startsWith('/app');
@@ -44,13 +54,13 @@ const Chatbot = () => {
       const response = await chatAPI.getHistory();
       // API returns { success: true, data: { messages: [...], pagination: {...} } }
       const chatMessages = response.data.data?.messages || response.data.messages || [];
-      
+
       // Map 'message' field to 'content' for compatibility
       const formattedMessages = chatMessages.map(msg => ({
         ...msg,
         content: msg.message || msg.content,
       }));
-      
+
       // Add welcome message if no history
       if (formattedMessages.length === 0) {
         setMessages([
@@ -97,7 +107,7 @@ const Chatbot = () => {
     setLoading(true);
 
     try {
-      const response = await chatAPI.sendMessage(inputMessage);
+      const response = await chatAPI.sendMessage(inputMessage, selectedModel);
       // API returns { success: true, data: { userMessage, aiMessage: { id, message, createdAt } } }
       const aiData = response.data.data?.aiMessage || response.data.aiMessage || {};
       const aiMessage = {
@@ -168,27 +178,65 @@ const Chatbot = () => {
 
       {/* Chat Window */}
       {isOpen && (
-        <div 
+        <div
           className="fixed bottom-6 right-6 w-96 h-[600px] bg-white rounded-2xl shadow-2xl flex flex-col z-50 border border-gray-200"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-t-2xl flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <div className="bg-white p-2 rounded-full">
-                <SparklesIcon className="w-5 h-5 text-blue-600" />
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-t-2xl">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <div className="bg-white p-2 rounded-full">
+                  <SparklesIcon className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">AI Health Assistant</h3>
+                </div>
               </div>
-              <div>
-                <h3 className="font-semibold">AI Health Assistant</h3>
-                <p className="text-xs opacity-90">Powered by Gemini AI</p>
-              </div>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="hover:bg-white/20 p-1 rounded-lg transition"
+              >
+                <XMarkIcon className="w-6 h-6" />
+              </button>
             </div>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="hover:bg-white/20 p-1 rounded-lg transition"
-            >
-              <XMarkIcon className="w-6 h-6" />
-            </button>
+
+            {/* Model Selector */}
+            <div className="relative mt-3">
+              <button
+                onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
+                className="w-full flex items-center justify-between px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all text-sm border border-white/20"
+              >
+                <div className="flex items-center gap-2">
+                  <span>{AI_MODELS.find(m => m.id === selectedModel)?.icon}</span>
+                  <span>{AI_MODELS.find(m => m.id === selectedModel)?.name} AI</span>
+                </div>
+                <ChevronDownIcon className={`w-4 h-4 transition-transform ${isModelDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isModelDropdownOpen && (
+                <div className="absolute left-0 right-0 mt-1 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50">
+                  {AI_MODELS.map((model) => (
+                    <button
+                      key={model.id}
+                      onClick={() => {
+                        setSelectedModel(model.id);
+                        localStorage.setItem('aiModel', model.id);
+                        setIsModelDropdownOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-left text-gray-900 hover:bg-gray-50 transition-colors text-sm ${selectedModel === model.id ? 'bg-purple-50' : ''
+                        }`}
+                    >
+                      <span>{model.icon}</span>
+                      <span>{model.name} AI</span>
+                      {selectedModel === model.id && (
+                        <span className="ml-auto text-purple-600">✓</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Messages */}
@@ -205,11 +253,10 @@ const Chatbot = () => {
                     className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
-                      className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                        message.role === 'user'
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-100 text-gray-900'
-                      }`}
+                      className={`max-w-[80%] rounded-2xl px-4 py-3 ${message.role === 'user'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 text-gray-900'
+                        }`}
                     >
                       {message.role === 'user' ? (
                         <p className="text-sm whitespace-pre-line">{message.content}</p>
@@ -219,9 +266,8 @@ const Chatbot = () => {
                         </div>
                       )}
                       <p
-                        className={`text-xs mt-1 ${
-                          message.role === 'user' ? 'text-blue-200' : 'text-gray-500'
-                        }`}
+                        className={`text-xs mt-1 ${message.role === 'user' ? 'text-blue-200' : 'text-gray-500'
+                          }`}
                       >
                         {new Date(message.createdAt).toLocaleTimeString('en-US', {
                           hour: '2-digit',

@@ -2,6 +2,7 @@ import axios from 'axios';
 import prisma from '../config/database.js';
 import { uploadToCloudinary } from '../config/cloudinary.js';
 import { generateHealthSuggestions } from '../config/gemini.js';
+import { generateNvidiaHealthSuggestions, isNvidiaConfigured } from '../config/nvidia.js';
 import { getRiskLevel } from '../utils/helpers.js';
 
 const PYTHON_SERVER_URL = process.env.PYTHON_SERVER_URL || 'http://localhost:5000';
@@ -22,7 +23,7 @@ export const uploadForDetection = async (req, res, next) => {
     }
 
     const userId = req.user.id;
-    const { detectionType = 'KIDNEY_DISEASE' } = req.body;
+    const { detectionType = 'KIDNEY_DISEASE', aiModel = 'gemini' } = req.body;
 
     console.log('📸 Image received for detection:', {
       filename: req.file.originalname,
@@ -94,7 +95,7 @@ export const uploadForDetection = async (req, res, next) => {
     }
 
     // Step 6: Generate AI-powered health suggestions
-    console.log('🤖 Generating AI health suggestions...');
+    console.log(`🤖 Generating AI health suggestions using ${aiModel}...`);
     const detectionData = {
       detectionType,
       prediction: prediction.prediction,
@@ -111,9 +112,13 @@ export const uploadForDetection = async (req, res, next) => {
 
     let aiSuggestions = null;
     try {
-      aiSuggestions = await generateHealthSuggestions(detectionData, profileData);
+      if (aiModel === 'nvidia' && isNvidiaConfigured()) {
+        aiSuggestions = await generateNvidiaHealthSuggestions(detectionData, profileData);
+      } else {
+        aiSuggestions = await generateHealthSuggestions(detectionData, profileData);
+      }
     } catch (error) {
-      console.error('Gemini API Error:', error);
+      console.error(`${aiModel} API Error:`, error);
       // Continue without AI suggestions
     }
 

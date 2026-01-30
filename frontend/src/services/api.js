@@ -74,18 +74,20 @@ export const profileAPI = {
 
 // Detection API
 export const detectionAPI = {
-  uploadScan: (file, detectionType = 'KIDNEY_DISEASE') => {
+  uploadScan: (file, detectionType = 'KIDNEY_DISEASE', aiModel = 'gemini') => {
     const formData = new FormData();
     formData.append('image', file);
     formData.append('detectionType', detectionType);
+    formData.append('aiModel', aiModel);
     return api.post('/detection/upload', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
-  upload: (file, detectionType = 'KIDNEY_DISEASE') => {
+  upload: (file, detectionType = 'KIDNEY_DISEASE', aiModel = 'gemini') => {
     const formData = new FormData();
     formData.append('image', file);
     formData.append('detectionType', detectionType);
+    formData.append('aiModel', aiModel);
     return api.post('/detection/upload', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
@@ -98,7 +100,7 @@ export const detectionAPI = {
 
 // Chat API
 export const chatAPI = {
-  sendMessage: (message) => api.post('/chat/message', { message }),
+  sendMessage: (message, model = 'gemini') => api.post('/chat/message', { message, model }),
   getHistory: (params) => api.get('/chat/history', { params }),
   clearHistory: () => api.delete('/chat/history'),
 };

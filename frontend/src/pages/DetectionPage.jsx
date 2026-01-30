@@ -2,9 +2,9 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { detectionAPI, chatAPI } from '../services/api';
 import toast from 'react-hot-toast';
-import { 
-  PaperAirplaneIcon, 
-  PhotoIcon, 
+import {
+  PaperAirplaneIcon,
+  PhotoIcon,
   SparklesIcon,
   UserCircleIcon,
   ComputerDesktopIcon,
@@ -12,6 +12,7 @@ import {
   ShieldCheckIcon,
   ExclamationTriangleIcon,
   ChartBarIcon,
+  ChevronDownIcon,
 } from '@heroicons/react/24/outline';
 import { SparklesIcon as SparklesIconSolid } from '@heroicons/react/24/solid';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -24,8 +25,17 @@ const DetectionPage = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(true);
+  const [selectedModel, setSelectedModel] = useState(() => {
+    return localStorage.getItem('aiModel') || 'gemini';
+  });
+  const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
+
+  const AI_MODELS = [
+    { id: 'gemini', name: 'Gemini 2.5 Flash', icon: '✨', description: 'Google AI' },
+    { id: 'nvidia', name: 'BioMistral-7B', icon: '🧬', description: 'NVIDIA AI' },
+  ];
 
   useEffect(() => {
     loadChatHistory();
@@ -47,10 +57,10 @@ const DetectionPage = () => {
         chatAPI.getHistory().catch(() => ({ data: { data: { messages: [] } } })),
         detectionAPI.getHistory().catch(() => ({ data: { data: { detections: [] } } })),
       ]);
-      
+
       const chatMessages = chatResponse.data.data?.messages || chatResponse.data.messages || [];
       const detections = detectionResponse.data.data?.detections || detectionResponse.data.detections || [];
-      
+
       // Convert chat history to detection page format
       const formattedChatMessages = chatMessages.map(msg => ({
         id: msg.id,
@@ -58,11 +68,11 @@ const DetectionPage = () => {
         content: msg.message || msg.content,
         timestamp: new Date(msg.createdAt),
       }));
-      
+
       // Convert detection history to detection page format
       const formattedDetections = detections.flatMap(detection => {
         const messages = [];
-        
+
         // Add user message with image preview
         messages.push({
           id: `user-detection-${detection.id}`,
@@ -71,7 +81,7 @@ const DetectionPage = () => {
           image: detection.imageUrl,
           timestamp: new Date(detection.createdAt),
         });
-        
+
         // Add detection result message
         messages.push({
           id: `detection-result-${detection.id}`,
@@ -88,15 +98,15 @@ const DetectionPage = () => {
           },
           timestamp: new Date(detection.createdAt),
         });
-        
+
         return messages;
       });
-      
+
       // Merge and sort all messages by timestamp
       const allMessages = [...formattedChatMessages, ...formattedDetections].sort(
         (a, b) => a.timestamp - b.timestamp
       );
-      
+
       // Add welcome message if no history
       if (allMessages.length === 0) {
         setMessages([
@@ -142,7 +152,7 @@ const DetectionPage = () => {
     setIsSending(true);
 
     try {
-      const response = await chatAPI.sendMessage(inputMessage);
+      const response = await chatAPI.sendMessage(inputMessage, selectedModel);
       const aiMessage = {
         id: `ai-${Date.now()}`,
         type: 'ai',
@@ -188,7 +198,7 @@ const DetectionPage = () => {
     setIsUploading(true);
 
     try {
-      const response = await detectionAPI.uploadScan(file);
+      const response = await detectionAPI.uploadScan(file, 'KIDNEY_DISEASE', selectedModel);
       console.log('Detection response:', response.data);
 
       const detectionData = response.data.data.detection;
@@ -321,8 +331,83 @@ const DetectionPage = () => {
               </p>
             </div>
           </div>
+
+          {/* AI Model Selector */}
+          <div className="relative">
+            <button
+              onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
+              className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all duration-300 backdrop-blur-sm border border-white/20"
+            >
+              <span className="text-lg">{AI_MODELS.find(m => m.id === selectedModel)?.icon}</span>
+              <div className="text-left">
+                <p className="text-white text-sm font-medium">{AI_MODELS.find(m => m.id === selectedModel)?.name}</p>
+                <p className="text-blue-200 text-xs">{AI_MODELS.find(m => m.id === selectedModel)?.description}</p>
+              </div>
+              <ChevronDownIcon className={`w-4 h-4 text-white transition-transform ${isModelDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isModelDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50">
+                {AI_MODELS.map((model) => (
+                  <button
+                    key={model.id}
+                    onClick={() => {
+                      setSelectedModel(model.id);
+                      localStorage.setItem('aiModel', model.id);
+                      setIsModelDropdownOpen(false);
+                    }}
+                    className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${selectedModel === model.id ? 'bg-purple-50 border-l-4 border-purple-500' : ''
+                      }`}
+                  >
+                    <span className="text-xl">{model.icon}</span>
+                    <div className="text-left">
+                      <p className="text-gray-900 font-medium">{model.name}</p>
+                      <p className="text-gray-500 text-xs">{model.description}</p>
+                    </div>
+                    {selectedModel === model.id && (
+                      <span className="ml-auto text-purple-600">✓</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Dropdown Portal - Rendered outside header to avoid overflow:hidden clipping */}
+      {isModelDropdownOpen && (
+        <>
+          {/* Backdrop to close dropdown */}
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setIsModelDropdownOpen(false)}
+          />
+          <div className="absolute right-8 top-[180px] w-56 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50">
+            {AI_MODELS.map((model) => (
+              <button
+                key={model.id}
+                onClick={() => {
+                  setSelectedModel(model.id);
+                  localStorage.setItem('aiModel', model.id);
+                  setIsModelDropdownOpen(false);
+                }}
+                className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${selectedModel === model.id ? 'bg-purple-50 border-l-4 border-purple-500' : ''
+                  }`}
+              >
+                <span className="text-xl">{model.icon}</span>
+                <div className="text-left">
+                  <p className="text-gray-900 font-medium">{model.name}</p>
+                  <p className="text-gray-500 text-xs">{model.description}</p>
+                </div>
+                {selectedModel === model.id && (
+                  <span className="ml-auto text-purple-600">✓</span>
+                )}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 bg-gradient-to-b from-gray-50 to-white">
@@ -336,151 +421,150 @@ const DetectionPage = () => {
         ) : (
           <>
             {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'} animate-fadeIn`}
-          >
-            {message.type === 'ai' && (
-              <div className="flex-shrink-0 mr-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg ring-2 ring-purple-200">
-                  <SparklesIcon className="w-6 h-6 text-white" />
-                </div>
-              </div>
-            )}
-
-            <div
-              className={`max-w-3xl transition-all duration-300 hover:shadow-xl ${
-                message.type === 'user'
-                  ? 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-2xl rounded-tr-sm shadow-lg'
-                  : message.type === 'detection'
-                  ? 'bg-white rounded-2xl border-2 border-purple-200 shadow-lg'
-                  : 'bg-white text-gray-900 rounded-2xl rounded-tl-sm shadow-md'
-              } px-6 py-4`}
-            >
-              {message.type === 'user' && message.image && (
-                <img
-                  src={message.image}
-                  alt="Uploaded scan"
-                  className="w-full max-w-sm rounded-xl mb-3 ring-2 ring-white shadow-lg"
-                />
-              )}
-
-              {message.type === 'detection' ? (
-                <div className="space-y-4">
-                  {/* Detection Header */}
-                  <div className="flex items-center gap-3 mb-4 p-3 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl">
-                    <div className="p-2 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg shadow-md">
-                      <ComputerDesktopIcon className="w-6 h-6 text-white" />
+              <div
+                key={message.id}
+                className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'} animate-fadeIn`}
+              >
+                {message.type === 'ai' && (
+                  <div className="flex-shrink-0 mr-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg ring-2 ring-purple-200">
+                      <SparklesIcon className="w-6 h-6 text-white" />
                     </div>
-                    <h3 className="text-lg font-bold text-gray-900">CT Scan Analysis Results</h3>
                   </div>
+                )}
 
-                  {/* Image */}
-                  <div className="relative group">
+                <div
+                  className={`max-w-3xl transition-all duration-300 hover:shadow-xl ${message.type === 'user'
+                    ? 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-2xl rounded-tr-sm shadow-lg'
+                    : message.type === 'detection'
+                      ? 'bg-white rounded-2xl border-2 border-purple-200 shadow-lg'
+                      : 'bg-white text-gray-900 rounded-2xl rounded-tl-sm shadow-md'
+                    } px-6 py-4`}
+                >
+                  {message.type === 'user' && message.image && (
                     <img
-                      src={message.detection.imageUrl}
-                      alt="CT Scan"
-                      className="w-full max-w-md rounded-xl shadow-xl ring-2 ring-gray-200 transition-transform duration-300 group-hover:scale-[1.02]"
+                      src={message.image}
+                      alt="Uploaded scan"
+                      className="w-full max-w-sm rounded-xl mb-3 ring-2 ring-white shadow-lg"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  </div>
-
-                  {/* Main Result */}
-                  <div className={`border-2 rounded-xl p-6 shadow-lg ${getResultColor(message.detection.prediction).bg} ${getResultColor(message.detection.prediction).border} ring-2 ${getResultColor(message.detection.prediction).ring} ring-opacity-30`}>
-                    <div className="text-center space-y-2">
-                      <div className="flex items-center justify-center gap-2">
-                        <ShieldCheckIcon className={`w-6 h-6 ${getResultColor(message.detection.prediction).text}`} />
-                        <p className="text-sm font-semibold text-gray-600">Detection Result</p>
-                      </div>
-                      <p className={`text-3xl font-bold ${getResultColor(message.detection.prediction).text}`}>
-                        {message.detection.prediction}
-                      </p>
-                      <div className="flex items-center justify-center gap-2">
-                        <div className="flex-1 max-w-xs bg-white/50 rounded-full h-3 overflow-hidden shadow-inner">
-                          <div 
-                            className={`h-full ${getResultColor(message.detection.prediction).badge} transition-all duration-1000 ease-out rounded-full`}
-                            style={{ width: `${message.detection.confidence * 100}%` }}
-                          ></div>
-                        </div>
-                        <span className={`text-sm font-bold ${getResultColor(message.detection.prediction).text}`}>
-                          {(message.detection.confidence * 100).toFixed(1)}%
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Risk Level */}
-                  {message.detection.riskLevel && (
-                    <div className={`rounded-xl p-5 shadow-md border-2 ${getRiskColor(message.detection.riskLevel).bg} ${getRiskColor(message.detection.riskLevel).border}`}>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className={`p-2 ${getRiskColor(message.detection.riskLevel).icon} rounded-lg shadow-md ${getRiskColor(message.detection.riskLevel).pulse}`}>
-                            <ExclamationTriangleIcon className="w-5 h-5 text-white" />
-                          </div>
-                          <span className={`text-sm font-semibold ${getRiskColor(message.detection.riskLevel).text}`}>Risk Assessment</span>
-                        </div>
-                        <span className={`text-xl font-bold ${getRiskColor(message.detection.riskLevel).text}`}>
-                          {message.detection.riskLevel}
-                        </span>
-                      </div>
-                      {message.detection.riskScore && (
-                        <div className="mt-3 flex items-center gap-2">
-                          <div className="flex-1 bg-white/50 rounded-full h-2 overflow-hidden shadow-inner">
-                            <div 
-                              className={`h-full ${getRiskColor(message.detection.riskLevel).icon} transition-all duration-1000 ease-out`}
-                              style={{ width: `${message.detection.riskScore}%` }}
-                            ></div>
-                          </div>
-                          <span className={`text-xs font-semibold ${getRiskColor(message.detection.riskLevel).text}`}>
-                            {message.detection.riskScore.toFixed(1)}/100
-                          </span>
-                        </div>
-                      )}
-                    </div>
                   )}
 
-                  {/* Probabilities */}
-                  <div className="bg-gradient-to-br from-gray-50 to-slate-50 rounded-xl p-5 border border-gray-200 shadow-md">
-                    <div className="flex items-center gap-2 mb-4">
-                      <ChartBarIcon className="w-5 h-5 text-indigo-600" />
-                      <h4 className="text-sm font-bold text-gray-900">Detailed Probabilities</h4>
-                    </div>
-                    <div className="space-y-3">
-                      {Object.entries(message.detection.probabilities || {}).map(([key, value]) => (
-                        <div key={key} className="group">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-sm font-medium text-gray-700">{key}</span>
-                            <span className="text-sm font-bold text-gray-900">
-                              {(value * 100).toFixed(1)}%
+                  {message.type === 'detection' ? (
+                    <div className="space-y-4">
+                      {/* Detection Header */}
+                      <div className="flex items-center gap-3 mb-4 p-3 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl">
+                        <div className="p-2 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg shadow-md">
+                          <ComputerDesktopIcon className="w-6 h-6 text-white" />
+                        </div>
+                        <h3 className="text-lg font-bold text-gray-900">CT Scan Analysis Results</h3>
+                      </div>
+
+                      {/* Image */}
+                      <div className="relative group">
+                        <img
+                          src={message.detection.imageUrl}
+                          alt="CT Scan"
+                          className="w-full max-w-md rounded-xl shadow-xl ring-2 ring-gray-200 transition-transform duration-300 group-hover:scale-[1.02]"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      </div>
+
+                      {/* Main Result */}
+                      <div className={`border-2 rounded-xl p-6 shadow-lg ${getResultColor(message.detection.prediction).bg} ${getResultColor(message.detection.prediction).border} ring-2 ${getResultColor(message.detection.prediction).ring} ring-opacity-30`}>
+                        <div className="text-center space-y-2">
+                          <div className="flex items-center justify-center gap-2">
+                            <ShieldCheckIcon className={`w-6 h-6 ${getResultColor(message.detection.prediction).text}`} />
+                            <p className="text-sm font-semibold text-gray-600">Detection Result</p>
+                          </div>
+                          <p className={`text-3xl font-bold ${getResultColor(message.detection.prediction).text}`}>
+                            {message.detection.prediction}
+                          </p>
+                          <div className="flex items-center justify-center gap-2">
+                            <div className="flex-1 max-w-xs bg-white/50 rounded-full h-3 overflow-hidden shadow-inner">
+                              <div
+                                className={`h-full ${getResultColor(message.detection.prediction).badge} transition-all duration-1000 ease-out rounded-full`}
+                                style={{ width: `${message.detection.confidence * 100}%` }}
+                              ></div>
+                            </div>
+                            <span className={`text-sm font-bold ${getResultColor(message.detection.prediction).text}`}>
+                              {(message.detection.confidence * 100).toFixed(1)}%
                             </span>
                           </div>
-                          <div className="bg-gray-200 rounded-full h-2.5 overflow-hidden shadow-inner">
-                            <div
-                              className="bg-gradient-to-r from-indigo-500 to-purple-600 h-2.5 rounded-full transition-all duration-1000 ease-out transform group-hover:scale-x-105"
-                              style={{ width: `${(value * 100).toFixed(1)}%` }}
-                            />
-                          </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
+                      </div>
 
-                  {/* AI Suggestions */}
-                  {message.detection.aiSuggestions && (
-                    <div className="relative overflow-hidden bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50 rounded-xl p-6 border-2 border-purple-200 shadow-lg">
-                      <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-purple-200 to-transparent rounded-full -mr-24 -mt-24 opacity-30"></div>
-                      <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-blue-200 to-transparent rounded-full -ml-16 -mb-16 opacity-20"></div>
-                      
-                      <div className="relative z-10">
-                        <div className="flex items-center gap-2 mb-4">
-                          <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg shadow-md">
-                            <SparklesIconSolid className="w-5 h-5 text-white animate-pulse" />
+                      {/* Risk Level */}
+                      {message.detection.riskLevel && (
+                        <div className={`rounded-xl p-5 shadow-md border-2 ${getRiskColor(message.detection.riskLevel).bg} ${getRiskColor(message.detection.riskLevel).border}`}>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <div className={`p-2 ${getRiskColor(message.detection.riskLevel).icon} rounded-lg shadow-md ${getRiskColor(message.detection.riskLevel).pulse}`}>
+                                <ExclamationTriangleIcon className="w-5 h-5 text-white" />
+                              </div>
+                              <span className={`text-sm font-semibold ${getRiskColor(message.detection.riskLevel).text}`}>Risk Assessment</span>
+                            </div>
+                            <span className={`text-xl font-bold ${getRiskColor(message.detection.riskLevel).text}`}>
+                              {message.detection.riskLevel}
+                            </span>
                           </div>
-                          <h4 className="text-base font-bold text-gray-900">AI Health Recommendations</h4>
+                          {message.detection.riskScore && (
+                            <div className="mt-3 flex items-center gap-2">
+                              <div className="flex-1 bg-white/50 rounded-full h-2 overflow-hidden shadow-inner">
+                                <div
+                                  className={`h-full ${getRiskColor(message.detection.riskLevel).icon} transition-all duration-1000 ease-out`}
+                                  style={{ width: `${message.detection.riskScore}%` }}
+                                ></div>
+                              </div>
+                              <span className={`text-xs font-semibold ${getRiskColor(message.detection.riskLevel).text}`}>
+                                {message.detection.riskScore.toFixed(1)}/100
+                              </span>
+                            </div>
+                          )}
                         </div>
-                        
-                        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-5 shadow-md border border-purple-200">
-                          <div className="prose prose-sm max-w-none 
+                      )}
+
+                      {/* Probabilities */}
+                      <div className="bg-gradient-to-br from-gray-50 to-slate-50 rounded-xl p-5 border border-gray-200 shadow-md">
+                        <div className="flex items-center gap-2 mb-4">
+                          <ChartBarIcon className="w-5 h-5 text-indigo-600" />
+                          <h4 className="text-sm font-bold text-gray-900">Detailed Probabilities</h4>
+                        </div>
+                        <div className="space-y-3">
+                          {Object.entries(message.detection.probabilities || {}).map(([key, value]) => (
+                            <div key={key} className="group">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-sm font-medium text-gray-700">{key}</span>
+                                <span className="text-sm font-bold text-gray-900">
+                                  {(value * 100).toFixed(1)}%
+                                </span>
+                              </div>
+                              <div className="bg-gray-200 rounded-full h-2.5 overflow-hidden shadow-inner">
+                                <div
+                                  className="bg-gradient-to-r from-indigo-500 to-purple-600 h-2.5 rounded-full transition-all duration-1000 ease-out transform group-hover:scale-x-105"
+                                  style={{ width: `${(value * 100).toFixed(1)}%` }}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* AI Suggestions */}
+                      {message.detection.aiSuggestions && (
+                        <div className="relative overflow-hidden bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50 rounded-xl p-6 border-2 border-purple-200 shadow-lg">
+                          <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-purple-200 to-transparent rounded-full -mr-24 -mt-24 opacity-30"></div>
+                          <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-blue-200 to-transparent rounded-full -ml-16 -mb-16 opacity-20"></div>
+
+                          <div className="relative z-10">
+                            <div className="flex items-center gap-2 mb-4">
+                              <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg shadow-md">
+                                <SparklesIconSolid className="w-5 h-5 text-white animate-pulse" />
+                              </div>
+                              <h4 className="text-base font-bold text-gray-900">AI Health Recommendations</h4>
+                            </div>
+
+                            <div className="bg-white/80 backdrop-blur-sm rounded-xl p-5 shadow-md border border-purple-200">
+                              <div className="prose prose-sm max-w-none 
                             prose-headings:text-gray-900 prose-headings:font-bold prose-headings:mb-4 prose-headings:mt-5 first:prose-headings:mt-0
                             prose-h1:text-xl prose-h1:border-b-2 prose-h1:border-purple-300 prose-h1:pb-2
                             prose-h2:text-lg prose-h2:text-purple-900
@@ -491,84 +575,84 @@ const DetectionPage = () => {
                             prose-ul:space-y-2 prose-ul:my-4
                             prose-ol:space-y-3 prose-ol:my-4 prose-ol:list-decimal prose-ol:pl-6
                             marker:text-purple-600 marker:font-bold">
-                            <ReactMarkdown
-                              components={{
-                                h1: ({node, ...props}) => (
-                                  <h1 className="text-xl font-bold flex items-center gap-2 text-gray-900 border-b-2 border-purple-300 pb-2 mb-4" {...props} />
-                                ),
-                                h2: ({node, ...props}) => (
-                                  <h2 className="text-lg font-bold flex items-center gap-2 text-purple-900 mt-5 mb-3" {...props} />
-                                ),
-                                h3: ({node, ...props}) => (
-                                  <h3 className="text-base font-semibold flex items-center gap-2 text-gray-800 mt-4 mb-2" {...props} />
-                                ),
-                                ul: ({node, ...props}) => (
-                                  <ul className="space-y-2 my-4" {...props} />
-                                ),
-                                ol: ({node, ...props}) => (
-                                  <ol className="space-y-3 my-4 list-decimal pl-6" {...props} />
-                                ),
-                                li: ({node, ...props}) => {
-                                  const parent = node?.position?.start?.line;
-                                  const isOrdered = node?.parent?.tagName === 'ol';
-                                  return (
-                                    <li className={`flex items-start gap-3 bg-gradient-to-r from-purple-50 to-transparent p-3 rounded-lg hover:from-purple-100 transition-colors duration-200 ${isOrdered ? 'ml-0' : ''}`} {...props}>
-                                      {!isOrdered && <span className="flex-shrink-0 w-2 h-2 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full mt-2"></span>}
-                                      <span className="flex-1 text-base leading-relaxed">{props.children}</span>
-                                    </li>
-                                  );
-                                },
-                                p: ({node, ...props}) => {
-                                  const text = node?.children?.[0]?.value || '';
-                                  // Check if paragraph contains urgent/important keywords
-                                  const isUrgent = /immediate|urgent|critical|emergency|as soon as possible|don't hesitate/i.test(text);
-                                  const isImportant = /important|essential|crucial|paramount|must|need to|should/i.test(text);
-                                  
-                                  if (isUrgent) {
-                                    return (
-                                      <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg my-4 shadow-sm">
-                                        <div className="flex items-start gap-3">
-                                          <ExclamationTriangleIcon className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5 animate-pulse" />
-                                          <p className="leading-relaxed text-base text-red-900 font-medium" {...props} />
-                                        </div>
-                                      </div>
-                                    );
-                                  }
-                                  
-                                  if (isImportant) {
-                                    return (
-                                      <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg my-4 shadow-sm">
-                                        <div className="flex items-start gap-3">
-                                          <ShieldCheckIcon className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" />
-                                          <p className="leading-relaxed text-base text-amber-900 font-medium" {...props} />
-                                        </div>
-                                      </div>
-                                    );
-                                  }
-                                  
-                                  return <p className="leading-relaxed mb-4 text-base text-gray-700" {...props} />;
-                                },
-                                strong: ({node, ...props}) => (
-                                  <strong className="font-extrabold text-purple-900 px-1.5 py-0.5 bg-purple-100 rounded" {...props} />
-                                ),
-                                em: ({node, ...props}) => (
-                                  <em className="italic text-purple-800" {...props} />
-                                ),
-                                blockquote: ({node, ...props}) => (
-                                  <blockquote className="border-l-4 border-blue-500 pl-4 italic text-gray-600 bg-blue-50 py-3 rounded-r-lg my-4" {...props} />
-                                ),
-                              }}
-                            >
-                              {message.detection.aiSuggestions}
-                            </ReactMarkdown>
+                                <ReactMarkdown
+                                  components={{
+                                    h1: ({ node, ...props }) => (
+                                      <h1 className="text-xl font-bold flex items-center gap-2 text-gray-900 border-b-2 border-purple-300 pb-2 mb-4" {...props} />
+                                    ),
+                                    h2: ({ node, ...props }) => (
+                                      <h2 className="text-lg font-bold flex items-center gap-2 text-purple-900 mt-5 mb-3" {...props} />
+                                    ),
+                                    h3: ({ node, ...props }) => (
+                                      <h3 className="text-base font-semibold flex items-center gap-2 text-gray-800 mt-4 mb-2" {...props} />
+                                    ),
+                                    ul: ({ node, ...props }) => (
+                                      <ul className="space-y-2 my-4" {...props} />
+                                    ),
+                                    ol: ({ node, ...props }) => (
+                                      <ol className="space-y-3 my-4 list-decimal pl-6" {...props} />
+                                    ),
+                                    li: ({ node, ...props }) => {
+                                      const parent = node?.position?.start?.line;
+                                      const isOrdered = node?.parent?.tagName === 'ol';
+                                      return (
+                                        <li className={`flex items-start gap-3 bg-gradient-to-r from-purple-50 to-transparent p-3 rounded-lg hover:from-purple-100 transition-colors duration-200 ${isOrdered ? 'ml-0' : ''}`} {...props}>
+                                          {!isOrdered && <span className="flex-shrink-0 w-2 h-2 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full mt-2"></span>}
+                                          <span className="flex-1 text-base leading-relaxed">{props.children}</span>
+                                        </li>
+                                      );
+                                    },
+                                    p: ({ node, ...props }) => {
+                                      const text = node?.children?.[0]?.value || '';
+                                      // Check if paragraph contains urgent/important keywords
+                                      const isUrgent = /immediate|urgent|critical|emergency|as soon as possible|don't hesitate/i.test(text);
+                                      const isImportant = /important|essential|crucial|paramount|must|need to|should/i.test(text);
+
+                                      if (isUrgent) {
+                                        return (
+                                          <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg my-4 shadow-sm">
+                                            <div className="flex items-start gap-3">
+                                              <ExclamationTriangleIcon className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5 animate-pulse" />
+                                              <p className="leading-relaxed text-base text-red-900 font-medium" {...props} />
+                                            </div>
+                                          </div>
+                                        );
+                                      }
+
+                                      if (isImportant) {
+                                        return (
+                                          <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg my-4 shadow-sm">
+                                            <div className="flex items-start gap-3">
+                                              <ShieldCheckIcon className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" />
+                                              <p className="leading-relaxed text-base text-amber-900 font-medium" {...props} />
+                                            </div>
+                                          </div>
+                                        );
+                                      }
+
+                                      return <p className="leading-relaxed mb-4 text-base text-gray-700" {...props} />;
+                                    },
+                                    strong: ({ node, ...props }) => (
+                                      <strong className="font-extrabold text-purple-900 px-1.5 py-0.5 bg-purple-100 rounded" {...props} />
+                                    ),
+                                    em: ({ node, ...props }) => (
+                                      <em className="italic text-purple-800" {...props} />
+                                    ),
+                                    blockquote: ({ node, ...props }) => (
+                                      <blockquote className="border-l-4 border-blue-500 pl-4 italic text-gray-600 bg-blue-50 py-3 rounded-r-lg my-4" {...props} />
+                                    ),
+                                  }}
+                                >
+                                  {message.detection.aiSuggestions}
+                                </ReactMarkdown>
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              ) : (
-                <div className="prose prose-sm max-w-none 
+                  ) : (
+                    <div className="prose prose-sm max-w-none 
                   prose-headings:text-gray-900 prose-headings:font-bold prose-headings:mb-3 prose-headings:mt-4 first:prose-headings:mt-0
                   prose-h1:text-lg prose-h1:text-gray-900
                   prose-h2:text-base prose-h2:text-gray-800
@@ -579,86 +663,86 @@ const DetectionPage = () => {
                   prose-ul:space-y-2 prose-ul:my-3
                   prose-ol:space-y-2 prose-ol:my-3 prose-ol:list-decimal prose-ol:pl-5
                   marker:text-blue-600 marker:font-semibold">
-                  <ReactMarkdown
-                    components={{
-                      h1: ({node, ...props}) => (
-                        <h1 className="text-lg font-bold text-gray-900 mb-3 mt-4 first:mt-0" {...props} />
-                      ),
-                      h2: ({node, ...props}) => (
-                        <h2 className="text-base font-bold text-gray-800 mb-2 mt-3" {...props} />
-                      ),
-                      h3: ({node, ...props}) => (
-                        <h3 className="text-sm font-semibold text-gray-700 mb-2 mt-3" {...props} />
-                      ),
-                      ul: ({node, ...props}) => (
-                        <ul className="space-y-2 my-3" {...props} />
-                      ),
-                      ol: ({node, ...props}) => (
-                        <ol className="space-y-2 my-3 list-decimal pl-5" {...props} />
-                      ),
-                      li: ({node, ...props}) => {
-                        const isOrdered = node?.parent?.tagName === 'ol';
-                        return (
-                          <li className={`flex items-start gap-2 ${isOrdered ? 'ml-0' : ''}`} {...props}>
-                            {!isOrdered && <span className="flex-shrink-0 w-1.5 h-1.5 bg-blue-500 rounded-full mt-1.5"></span>}
-                            <span className="flex-1 text-sm leading-relaxed">{props.children}</span>
-                          </li>
-                        );
-                      },
-                      p: ({node, ...props}) => (
-                        <p className="leading-relaxed mb-3 text-sm" {...props} />
-                      ),
-                      strong: ({node, ...props}) => (
-                        <strong className="font-extrabold text-gray-900 px-1 py-0.5 bg-blue-100 rounded" {...props} />
-                      ),
-                      em: ({node, ...props}) => (
-                        <em className="italic text-gray-600" {...props} />
-                      ),
-                    }}
-                  >
-                    {message.content}
-                  </ReactMarkdown>
+                      <ReactMarkdown
+                        components={{
+                          h1: ({ node, ...props }) => (
+                            <h1 className="text-lg font-bold text-gray-900 mb-3 mt-4 first:mt-0" {...props} />
+                          ),
+                          h2: ({ node, ...props }) => (
+                            <h2 className="text-base font-bold text-gray-800 mb-2 mt-3" {...props} />
+                          ),
+                          h3: ({ node, ...props }) => (
+                            <h3 className="text-sm font-semibold text-gray-700 mb-2 mt-3" {...props} />
+                          ),
+                          ul: ({ node, ...props }) => (
+                            <ul className="space-y-2 my-3" {...props} />
+                          ),
+                          ol: ({ node, ...props }) => (
+                            <ol className="space-y-2 my-3 list-decimal pl-5" {...props} />
+                          ),
+                          li: ({ node, ...props }) => {
+                            const isOrdered = node?.parent?.tagName === 'ol';
+                            return (
+                              <li className={`flex items-start gap-2 ${isOrdered ? 'ml-0' : ''}`} {...props}>
+                                {!isOrdered && <span className="flex-shrink-0 w-1.5 h-1.5 bg-blue-500 rounded-full mt-1.5"></span>}
+                                <span className="flex-1 text-sm leading-relaxed">{props.children}</span>
+                              </li>
+                            );
+                          },
+                          p: ({ node, ...props }) => (
+                            <p className="leading-relaxed mb-3 text-sm" {...props} />
+                          ),
+                          strong: ({ node, ...props }) => (
+                            <strong className="font-extrabold text-gray-900 px-1 py-0.5 bg-blue-100 rounded" {...props} />
+                          ),
+                          em: ({ node, ...props }) => (
+                            <em className="italic text-gray-600" {...props} />
+                          ),
+                        }}
+                      >
+                        {message.content}
+                      </ReactMarkdown>
+                    </div>
+                  )}
+
+                  <p className="text-xs mt-3 opacity-60 flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                    </svg>
+                    {new Date(message.timestamp).toLocaleTimeString()}
+                  </p>
                 </div>
-              )}
 
-              <p className="text-xs mt-3 opacity-60 flex items-center gap-1">
-                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                </svg>
-                {new Date(message.timestamp).toLocaleTimeString()}
-              </p>
-            </div>
+                {message.type === 'user' && (
+                  <div className="flex-shrink-0 ml-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg ring-2 ring-blue-200">
+                      <UserCircleIcon className="w-6 h-6 text-white" />
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
 
-            {message.type === 'user' && (
-              <div className="flex-shrink-0 ml-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg ring-2 ring-blue-200">
-                  <UserCircleIcon className="w-6 h-6 text-white" />
+            {(isUploading || isSending) && (
+              <div className="flex justify-start animate-fadeIn">
+                <div className="flex-shrink-0 mr-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg ring-2 ring-purple-200 animate-pulse">
+                    <SparklesIcon className="w-6 h-6 text-white" />
+                  </div>
+                </div>
+                <div className="bg-white text-gray-900 rounded-2xl rounded-tl-sm px-6 py-4 shadow-lg border border-purple-200">
+                  <div className="flex items-center gap-3">
+                    <LoadingSpinner size="sm" />
+                    <span className="text-sm font-medium text-gray-700">
+                      {isUploading ? 'Analyzing your CT scan...' : 'Thinking...'}
+                    </span>
+                  </div>
                 </div>
               </div>
             )}
-          </div>
-        ))}
 
-        {(isUploading || isSending) && (
-          <div className="flex justify-start animate-fadeIn">
-            <div className="flex-shrink-0 mr-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg ring-2 ring-purple-200 animate-pulse">
-                <SparklesIcon className="w-6 h-6 text-white" />
-              </div>
-            </div>
-            <div className="bg-white text-gray-900 rounded-2xl rounded-tl-sm px-6 py-4 shadow-lg border border-purple-200">
-              <div className="flex items-center gap-3">
-                <LoadingSpinner size="sm" />
-                <span className="text-sm font-medium text-gray-700">
-                  {isUploading ? 'Analyzing your CT scan...' : 'Thinking...'}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div ref={messagesEndRef} />
-        </>
+            <div ref={messagesEndRef} />
+          </>
         )}
       </div>
 
@@ -672,7 +756,7 @@ const DetectionPage = () => {
             accept="image/*"
             className="hidden"
           />
-          
+
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
