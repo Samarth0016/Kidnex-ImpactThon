@@ -250,9 +250,62 @@ Respond in JSON format:
   }
 };
 
+/**
+ * Validate if an image is a medical scan
+ * @param {Buffer} imageBuffer - Image file buffer
+ * @param {string} mimeType - Image mime type
+ * @returns {Promise<object>} - Validation result { isMedical: boolean, reason: string }
+ */
+export const validateMedicalImage = async (imageBuffer, mimeType) => {
+  try {
+    const model = getGeminiModel();
+
+    const prompt = `
+    Analyze this image strictly. Is this image a medical imaging scan (such as a CT scan, MRI, X-ray, Ultrasound) or a medically relevant anatomical image used for diagnosis?
+    
+    Respond ONLY with a JSON object in this format:
+    {
+      "isMedical": boolean,
+      "reason": "Short explanation of why this is or isn't a medical scan"
+    }
+    
+    If appropriate, set isMedical to true. If it is a photo of a person, a landscape, an object, or anything that is clearly NOT a medical diagnostic image, set isMedical to false.
+    `;
+
+    const imagePart = {
+      inlineData: {
+        data: imageBuffer.toString('base64'),
+        mimeType: mimeType,
+      },
+    };
+
+    const result = await model.generateContent([prompt, imagePart]);
+    const response = await result.response;
+    const text = response.text();
+
+    console.log('🔍 Image Validation Result:', text);
+
+    // Extract JSON from response
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
+    }
+
+    // Default to strict false if parsing fails
+    return { isMedical: false, reason: "Failed to parse validation response" };
+  } catch (error) {
+    console.error('Image Validation Error:', error);
+    // On error (e.g. API down), we might want to fail open or closed. 
+    // Failing open (allowing) might be safer for UX if AI is down, but safer for system to fail closed.
+    // Let's fail close but log it.
+    throw new Error('Failed to validate image content');
+  }
+};
+
 export default {
   getGeminiModel,
   generateHealthSuggestions,
   generateChatResponse,
   calculateHealthRiskScore,
+  validateMedicalImage,
 };

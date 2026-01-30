@@ -1,7 +1,7 @@
 import axios from 'axios';
 import prisma from '../config/database.js';
 import { uploadToCloudinary } from '../config/cloudinary.js';
-import { generateHealthSuggestions } from '../config/gemini.js';
+import { generateHealthSuggestions, validateMedicalImage } from '../config/gemini.js';
 import { generateNvidiaHealthSuggestions, isNvidiaConfigured } from '../config/nvidia.js';
 import { generateOllamaHealthSuggestions, isOllamaConfigured } from '../config/ollama.js';
 import { getRiskLevel } from '../utils/helpers.js';
@@ -40,6 +40,27 @@ export const uploadForDetection = async (req, res, next) => {
       `health-platform/detections/${detectionType.toLowerCase()}`,
       `${userId}_${Date.now()}`
     );
+
+    // Step 1.5: Validate if image is a medical scan
+    console.log('🔍 Validating image content...');
+    try {
+      const validationResult = await validateMedicalImage(req.file.buffer, req.file.mimetype);
+      
+      if (!validationResult.isMedical) {
+        console.warn('⚠️ Invalid medical image detected:', validationResult.reason);
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid Image Type',
+          message: 'The uploaded image does not appear to be a medical CT scan or diagnostic image. ' + (validationResult.reason || ''),
+          isMedical: false
+        });
+      }
+      console.log('✅ Image validation passed');
+    } catch (validationError) {
+      console.error('⚠️ Validation check failed, proceeding with caution:', validationError.message);
+      // We choose to proceed if validation fails due to API error, or you can fail closed:
+      // return res.status(503).json({ success: false, message: 'Validation service unavailable' });
+    }
 
     // Step 2: Convert image buffer to base64 for Python server
     const base64Image = req.file.buffer.toString('base64');
