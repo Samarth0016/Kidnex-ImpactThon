@@ -133,4 +133,19 @@ export const medicationAPI = {
   delete: (id) => api.delete(`/medications/${id}`),
 };
 
+// Report Simplifier API
+export const reportSimplifierAPI = {
+  upload: (file, aiModel = 'gemini') => {
+    const formData = new FormData();
+    formData.append('report', file);
+    formData.append('aiModel', aiModel);
+    return api.post('/report-simplifier/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  getHistory: (params) => api.get('/report-simplifier/history', { params }),
+  getById: (id) => api.get(`/report-simplifier/${id}`),
+  delete: (id) => api.delete(`/report-simplifier/${id}`),
+};
+
 export default api;

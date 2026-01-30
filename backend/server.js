@@ -14,6 +14,7 @@ import chatRoutes from './src/routes/chat.routes.js';
 import healthLogRoutes from './src/routes/healthLog.routes.js';
 import medicationRoutes from './src/routes/medication.routes.js';
 import dashboardRoutes from './src/routes/dashboard.routes.js';
+import reportSimplifierRoutes from './src/routes/reportSimplifier.routes.js';
 
 // Import middleware
 import { errorHandler } from './src/middleware/errorHandler.js';
@@ -78,6 +79,7 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/health-logs', healthLogRoutes);
 app.use('/api/medications', medicationRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/report-simplifier', reportSimplifierRoutes);
 
 // 404 handler
 app.use(notFound);

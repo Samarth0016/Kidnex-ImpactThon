@@ -9,6 +9,7 @@ import {
   ClipboardDocumentListIcon,
   ArrowRightOnRectangleIcon,
   Bars3Icon,
+  DocumentTextIcon,
 } from '@heroicons/react/24/outline';
 import { 
   HomeIcon as HomeIconSolid,
@@ -16,7 +17,8 @@ import {
   ClockIcon as ClockIconSolid,
   UserIcon as UserIconSolid,
   HeartIcon as HeartIconSolid,
-  ClipboardDocumentListIcon as ClipboardIconSolid
+  ClipboardDocumentListIcon as ClipboardIconSolid,
+  DocumentTextIcon as DocumentTextIconSolid
 } from '@heroicons/react/24/solid';
 
 const Layout = () => {
@@ -27,6 +29,7 @@ const Layout = () => {
     { name: 'Detection', href: '/app/detection', icon: BeakerIcon, solidIcon: BeakerIconSolid, color: 'purple' },
     { name: 'History', href: '/app/history', icon: ClockIcon, solidIcon: ClockIconSolid, color: 'indigo' },
     { name: 'Health Logs', href: '/app/health-logs', icon: HeartIcon, solidIcon: HeartIconSolid, color: 'pink' },
+    { name: 'Report Simplifier', href: '/app/report-simplifier', icon: DocumentTextIcon, solidIcon: DocumentTextIconSolid, color: 'emerald' },
     { name: 'Medications', href: '/app/medications', icon: ClipboardDocumentListIcon, solidIcon: ClipboardIconSolid, color: 'purple' },
     { name: 'Profile', href: '/app/profile', icon: UserIcon, solidIcon: UserIconSolid, color: 'blue' },
   ];

@@ -22,7 +22,7 @@ export const isOllamaConfigured = () => {
  * @param {object} options - Additional options
  * @returns {Promise<string>} - AI response text
  */
-const generateOllamaCompletion = async (messages, options = {}) => {
+export const generateOllamaCompletion = async (messages, options = {}) => {
   try {
     console.log(`🦙 Calling Ollama with model: ${OLLAMA_MODEL}`);
 
@@ -54,6 +54,9 @@ const generateOllamaCompletion = async (messages, options = {}) => {
     throw error;
   }
 };
+
+// Alias for backward compatibility
+export const generateOllamaResponse = generateOllamaCompletion;
 
 /**
  * Fallback response when Ollama is unavailable
@@ -169,5 +172,7 @@ ${userContext.recentDetections?.length > 0 ? `\n**Recent Detections:**\n${JSON.s
 export default {
   generateOllamaHealthSuggestions,
   generateOllamaChatResponse,
+  generateOllamaCompletion,
+  generateOllamaResponse,
   isOllamaConfigured,
 };

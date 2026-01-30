@@ -13,6 +13,7 @@ import DetectionDetail from './pages/DetectionDetail';
 import Profile from './pages/Profile';
 import HealthLogs from './pages/HealthLogs';
 import Medications from './pages/Medications';
+import ReportSimplifier from './pages/ReportSimplifier';
 
 // Components
 import Layout from './components/Layout';
@@ -61,6 +62,7 @@ function App() {
           <Route path="profile" element={<Profile />} />
           <Route path="health-logs" element={<HealthLogs />} />
           <Route path="medications" element={<Medications />} />
+          <Route path="report-simplifier" element={<ReportSimplifier />} />
         </Route>
 
         {/* 404 */}

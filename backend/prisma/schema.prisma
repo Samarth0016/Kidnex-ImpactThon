@@ -24,14 +24,15 @@ model User {
   lastLogin DateTime?
 
   // Relations
-  profile          Profile?
-  medicalHistory   MedicalHistory?
-  detectionHistory DetectionHistory[]
-  chatHistory      ChatMessage[]
-  healthLogs       HealthLog[]
-  medications      Medication[]
-  familyMembers    FamilyMember[]
-  habits           HabitLog[]
+  profile           Profile?
+  medicalHistory    MedicalHistory?
+  detectionHistory  DetectionHistory[]
+  chatHistory       ChatMessage[]
+  healthLogs        HealthLog[]
+  medications       Medication[]
+  familyMembers     FamilyMember[]
+  habits            HabitLog[]
+  simplifiedReports SimplifiedReport[]
 
   @@map("users")
 }
@@ -392,4 +393,30 @@ enum ReportType {
   MRI
   ULTRASOUND
   OTHER
+}
+
+// ==================== SIMPLIFIED REPORTS (OCR + AI) ====================
+model SimplifiedReport {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // File Information
+  originalFileName String
+  fileType         String // 'image/jpeg', 'image/png', 'application/pdf'
+  imageUrl         String? // Cloudinary URL (for images)
+
+  // Extracted & Processed Content
+  extractedText          String  @db.Text // OCR extracted text
+  simplifiedExplanation  String  @db.Text // AI-simplified explanation
+
+  // AI Model Used
+  aiModel String @default("gemini") // 'gemini' or 'ollama'
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, createdAt])
+  @@map("simplified_reports")
 }
