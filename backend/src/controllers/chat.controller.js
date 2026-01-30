@@ -1,6 +1,7 @@
 import prisma from '../config/database.js';
 import { generateChatResponse } from '../config/gemini.js';
 import { generateNvidiaChatResponse, isNvidiaConfigured } from '../config/nvidia.js';
+import { generateOllamaChatResponse, isOllamaConfigured } from '../config/ollama.js';
 
 /**
  * @desc    Send message to AI chatbot
@@ -61,6 +62,12 @@ export const sendMessage = async (req, res, next) => {
     
     if (model === 'nvidia' && isNvidiaConfigured()) {
       aiResponseText = await generateNvidiaChatResponse(
+        message,
+        context,
+        conversationHistory.reverse()
+      );
+    } else if (model === 'ollama' && isOllamaConfigured()) {
+      aiResponseText = await generateOllamaChatResponse(
         message,
         context,
         conversationHistory.reverse()

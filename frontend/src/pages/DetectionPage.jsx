@@ -34,6 +34,7 @@ const DetectionPage = () => {
 
   const AI_MODELS = [
     { id: 'gemini', name: 'Gemini 2.5 Flash', icon: '✨', description: 'Google AI' },
+    { id: 'ollama', name: 'Ollama (Local)', icon: '🦙', description: 'Local Model' },
     { id: 'nvidia', name: 'BioMistral-7B', icon: '🧬', description: 'NVIDIA AI' },
   ];
 

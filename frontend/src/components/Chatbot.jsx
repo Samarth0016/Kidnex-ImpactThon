@@ -28,6 +28,7 @@ const Chatbot = () => {
 
   const AI_MODELS = [
     { id: 'gemini', name: 'Gemini', icon: '✨', color: 'blue' },
+    { id: 'ollama', name: 'Ollama (Local)', icon: '🦙', color: 'orange' },
     { id: 'nvidia', name: 'BioMistral', icon: '🧬', color: 'green' },
   ];
 

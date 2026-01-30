@@ -3,6 +3,7 @@ import prisma from '../config/database.js';
 import { uploadToCloudinary } from '../config/cloudinary.js';
 import { generateHealthSuggestions } from '../config/gemini.js';
 import { generateNvidiaHealthSuggestions, isNvidiaConfigured } from '../config/nvidia.js';
+import { generateOllamaHealthSuggestions, isOllamaConfigured } from '../config/ollama.js';
 import { getRiskLevel } from '../utils/helpers.js';
 
 const PYTHON_SERVER_URL = process.env.PYTHON_SERVER_URL || 'http://localhost:5000';
@@ -114,6 +115,8 @@ export const uploadForDetection = async (req, res, next) => {
     try {
       if (aiModel === 'nvidia' && isNvidiaConfigured()) {
         aiSuggestions = await generateNvidiaHealthSuggestions(detectionData, profileData);
+      } else if (aiModel === 'ollama' && isOllamaConfigured()) {
+        aiSuggestions = await generateOllamaHealthSuggestions(detectionData, profileData);
       } else {
         aiSuggestions = await generateHealthSuggestions(detectionData, profileData);
       }
