@@ -346,32 +346,6 @@ const DetectionPage = () => {
               </div>
               <ChevronDownIcon className={`w-4 h-4 text-white transition-transform ${isModelDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
-
-            {isModelDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50">
-                {AI_MODELS.map((model) => (
-                  <button
-                    key={model.id}
-                    onClick={() => {
-                      setSelectedModel(model.id);
-                      localStorage.setItem('aiModel', model.id);
-                      setIsModelDropdownOpen(false);
-                    }}
-                    className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${selectedModel === model.id ? 'bg-purple-50 border-l-4 border-purple-500' : ''
-                      }`}
-                  >
-                    <span className="text-xl">{model.icon}</span>
-                    <div className="text-left">
-                      <p className="text-gray-900 font-medium">{model.name}</p>
-                      <p className="text-gray-500 text-xs">{model.description}</p>
-                    </div>
-                    {selectedModel === model.id && (
-                      <span className="ml-auto text-purple-600">✓</span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
         </div>
       </div>
